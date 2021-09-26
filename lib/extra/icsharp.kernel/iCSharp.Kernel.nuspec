@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>iCSharp.Kernel</id>
+    <version>1.0.7</version>
+    <title>My title</title>
+    <authors>Me</authors>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <projectUrl>http://project_url_here_or_delete_this_line/</projectUrl>
+    <iconUrl>http://icon_url_here_or_delete_this_line/</iconUrl>
+    <description>A desc</description>
+    <releaseNotes>Summary of changes made in this release of the package.</releaseNotes>
+    <copyright>Something</copyright>
+    <tags>Tag1 Tag2</tags>
+    <dependencies>
+      <dependency id="Common.Logging" version="2.1.2" />
+      <dependency id="NetMQ" version="4.0.0.1" />
+      <dependency id="Newtonsoft.Json" version="6.0.4" />
+    </dependencies>
+  </metadata>
+</package>

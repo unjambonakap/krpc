@@ -1,3 +1,6 @@
+package(default_visibility = ['//visibility:public'])
+load('//lib:extra.bzl', 'extras')
+
 exports_files ([
     'mono-4.5/mscorlib.dll',
     'mono-4.5/System.dll',
@@ -26,4 +29,5 @@ exports_files ([
     'ksp/KSP_Data/Managed/System.dll',
     'ksp/KSP_Data/Managed/System.Core.dll',
     'ksp/KSP_Data/Managed/System.Xml.dll'
-])
+] + extras.files)
+
