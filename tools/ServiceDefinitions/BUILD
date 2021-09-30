@@ -1,5 +1,6 @@
 load('//tools/build:csharp.bzl', 'csharp_binary', 'csharp_library', 'csharp_assembly_info', 'csharp_gendarme_test')
 load('//:config.bzl', 'assembly_version', 'author')
+load('//lib:extra.bzl', 'extras')
 
 srcs = glob(['**/*.cs']) + [':AssemblyInfo']
 deps = [
@@ -21,9 +22,9 @@ deps = [
     '//tools/build/mono-4.5:System.Runtime',
     '//tools/build/mono-4.5:System.IO',
     '//tools/build/mono-4.5:System.Xml',
-    '//tools/build/mono-4.5:Newtonsoft.Json',
+    #'//tools/build/mono-4.5:Newtonsoft.Json',
     '//tools/build/mono-4.5:NDesk.Options'
-]
+] + extras.build_deps()
 
 csharp_binary(
     name = 'ServiceDefinitions',
@@ -65,7 +66,7 @@ csharp_library(
         '//tools/build/mono-4.5:System.Xml',
         '//tools/build/mono-4.5:System.Runtime',
         '//tools/build/mono-4.5:System.IO'
-    ],
+] + extras.build_deps(),
     visibility = ['//tools/krpctools:__pkg__', '//tools/TestServer:__pkg__']
 )
 

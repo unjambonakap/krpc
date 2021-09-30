@@ -1,0 +1,29 @@
+Metadata-Version: 2.1
+Name: krpctools
+Version: 0.4.9
+Summary: Development tools and scripts for kRPC.
+Home-page: https://krpc.github.io/krpc
+Author: djungelorm
+Author-email: djungelorm@users.noreply.github.com
+License: GNU GPL v3
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: Unix
+Classifier: Topic :: Communications
+Classifier: Topic :: Games/Entertainment :: Simulation
+Classifier: Topic :: Internet
+License-File: LICENSE
+
+Tools for kRPC:
+
+ - krpc-clientgen : generate client stub code for kRPC services
+ - krpc-docgen : generate documentation for kRPC services
+ - krpc-servicedefs : generate service definition JSON files for kRPC services
+
+

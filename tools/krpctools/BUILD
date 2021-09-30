@@ -71,13 +71,14 @@ py_sdist(
         'tools/TestServer/': 'krpctools/bin/'
     }
 )
+load("@my_deps//:requirements.bzl", "requirement")
 
 deps = [
     '//client/python:python_base',
-    '@python_protobuf//file',
-    '@python_six//file',
-    '@python_jinja2//file',
-    '@python_markupsafe//file'
+    requirement("six"),
+    requirement("protobuf"),
+    requirement("jinja2"),
+    requirement("markupsafe"),
 ]
 
 py_script(

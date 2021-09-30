@@ -1,7 +1,9 @@
-load('//tools/build:csharp.bzl', 'csharp_reference')
+load('//tools/build:csharp.bzl', 'csharp_reference', 'csharp_references')
+load('//lib:extra.bzl', 'extras')
 
 package(default_visibility = ['//visibility:public'])
 
+extras.define_refs()
 csharp_reference(name = 'UnityEngine', file = '//lib:ksp/KSP_Data/Managed/UnityEngine.dll')
 csharp_reference(name = 'UnityEngine.AssetBundleModule', file = '//lib:ksp/KSP_Data/Managed/UnityEngine.AssetBundleModule.dll')
 csharp_reference(name = 'UnityEngine.AnimationModule', file = '//lib:ksp/KSP_Data/Managed/UnityEngine.AnimationModule.dll')
@@ -25,3 +27,5 @@ csharp_reference(name = 'System.Xml', file = '//lib:ksp/KSP_Data/Managed/System.
 csharp_reference(name = 'KRPC.IO.Ports', file = '@csharp_krpc_io_ports//file')
 
 csharp_reference(name = 'Google.Protobuf', file = '@csharp_protobuf_net35//file')
+
+filegroup(name='external_refs', srcs=extras.libs_name())

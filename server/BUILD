@@ -2,6 +2,7 @@ load('//tools/build:csharp.bzl', 'csharp_library', 'csharp_nunit_test', 'csharp_
 load('//tools/ServiceDefinitions:build.bzl', 'service_definitions')
 load('//tools/build:image.bzl', 'png_images')
 load('//:config.bzl', 'version', 'ksp_version_max', 'ksp_version_min', 'assembly_version', 'author')
+load('//lib:extra.bzl', 'extras')
 
 filegroup(
     name = 'server',
@@ -75,8 +76,8 @@ deps = [
     '//tools/build/ksp:System',
     '//tools/build/ksp:System.Core',
     '//tools/build/ksp:System.Xml',
-    '//tools/build/ksp:KRPC.IO.Ports'
-]
+    '//tools/build/ksp:KRPC.IO.Ports',
+] + extras.build_deps()
 
 csharp_library(
     name = 'KRPC',

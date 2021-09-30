@@ -1,5 +1,30 @@
+load('//bzl/bazel-skylib/lib:paths.bzl', 'paths')
 _MCS = 'mcs'
 _MCS_FLAGS = ['-noconfig', '-nostdlib']
+
+def _refs_impl(ctx):
+    commands = []
+    output = ctx.outputs.dummy
+    for input in ctx.files.files:
+      res = paths.basename(input.path)
+      print(input, res)
+      commands.append('cp "%s" "%s"' % (input.path, res))
+
+
+    commands.append('touch "%s"' % output.path)
+    ctx.actions.run_shell(
+        mnemonic = 'CSharpReference',
+        inputs = ctx.files.files,
+        outputs = [ctx.outputs.dummy],
+        command = ';'.join(commands)
+    )
+
+    return struct(
+        name = ctx.label.name,
+        target_type = ctx.attr._target_type,
+        lib = output,
+        out = output
+    )
 
 def _ref_impl(ctx):
     input = ctx.file.file
@@ -19,7 +44,7 @@ def _ref_impl(ctx):
         out = output
     )
 
-def _csc_args(srcs, deps, exe=None, lib=None, doc=None, optimize=True, warn=4, nowarn=[], define=[], warnaserror=True):
+def _csc_args(srcs, deps, exe=None, lib=None, doc=None, optimize=True, warn=4, nowarn=[], define=[], warnaserror=False):
     if exe: target_type = 'exe'
     if lib: target_type = 'library'
     args = ['-target:%s' % target_type, '-debug']
@@ -210,10 +235,18 @@ _COMMON_ATTRS = {
     'optimize': attr.bool(default=True),
     'warn': attr.int(default=4),
     'nowarn': attr.string_list(),
-    'warnaserror': attr.bool(default=True),
+    'warnaserror': attr.bool(default=False),
     'define': attr.string_list()
 }
 
+csharp_references = rule(
+    implementation = _refs_impl,
+    attrs = {
+        'files': attr.label(mandatory=True),
+        '_target_type': attr.string(default='ref')
+    },
+    outputs={'dummy': 'dummy.dll'}
+)
 csharp_reference = rule(
     implementation = _ref_impl,
     attrs = {

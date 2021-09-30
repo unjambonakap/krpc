@@ -3,6 +3,25 @@ workspace(name = "krpc")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 load("@bazel_tools//tools/build_defs/repo:maven_rules.bzl", "maven_jar")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "rules_python",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.4.0/rules_python-0.4.0.tar.gz",
+    sha256 = "954aa89b491be4a083304a2cb838019c8b8c3720a7abb9c4cb81ac7a24230cea",
+)
+load("@rules_python//python:pip.bzl", "pip_install")
+load("@rules_python//python:pip.bzl", "pip_parse")
+
+# Create a central repo that knows about the dependencies needed from
+# requirements_lock.txt.
+pip_install(
+   name = "my_deps",
+   requirements= "//:requirements.txt",
+)
+
+# Load the starlark macro which will define your dependencies.
+load("@my_deps//:requirements.bzl", "install_deps")
 
 http_archive(
     name = 'bazel_skylib',
@@ -514,12 +533,6 @@ http_file(
 )
 
 http_file(
-    name = 'python_jinja2',
-    urls = ['https://files.pythonhosted.org/packages/56/e6/332789f295cf22308386cf5bbd1f4e00ed11484299c5d7383378cf48ba47/Jinja2-2.10.tar.gz'],
-    sha256 = 'f84be1bb0040caca4cea721fcbbbbd61f9be9464ca236387158b0feea01914a4'
-)
-
-http_file(
     name = 'python_lazy_object_proxy',
     urls = ['https://files.pythonhosted.org/packages/55/08/23c0753599bdec1aec273e322f277c4e875150325f565017f6280549f554/lazy-object-proxy-1.3.1.tar.gz'],
     sha256 = 'eb91be369f945f10d3a49f5f9be8b3d0b93a4c2be8f8a5b83b0571b8123e0a7a'
@@ -529,12 +542,6 @@ http_file(
     name = 'python_lxml',
     urls = ['https://files.pythonhosted.org/packages/4b/20/ddf5eb3bd5c57582d2b4652b4bbcf8da301bdfe5d805cb94e805f4d7464d/lxml-4.2.5.tar.gz'],
     sha256 = '36720698c29e7a9626a0dc802ef8885f8f0239bfd1689628ecd459a061f2807f'
-)
-
-http_file(
-    name = 'python_markupsafe',
-    urls = ['https://files.pythonhosted.org/packages/4d/de/32d741db316d8fdb7680822dd37001ef7a448255de9699ab4bfcbdf4172b/MarkupSafe-1.0.tar.gz'],
-    sha256 = 'a6be69091dac236ea9c6bc7d012beab42010fa914c459791d627dad4910eb665'
 )
 
 http_file(
@@ -567,11 +574,6 @@ http_file(
     sha256 = 'e40a936c9a450ad81df37f549d676d127b1b66000a6c500caa2b085bc0ca976c'
 )
 
-http_file(
-    name = 'python_protobuf',
-    urls = ['https://files.pythonhosted.org/packages/6d/54/12c5c92ffab546538ea5b544c6afbfcce333fd47e99c1198e24a8efdef1f/protobuf-3.9.1.tar.gz'],
-    sha256 = 'd831b047bd69becaf64019a47179eb22118a50dd008340655266a906c69c6417'
-)
 
 http_file(
     name = 'python_pyenchant',
@@ -610,27 +612,9 @@ http_file(
 )
 
 http_file(
-    name = 'python_setuptools',
-    urls = ['https://files.pythonhosted.org/packages/6e/9c/6a003320b00ef237f94aa74e4ad66c57a7618f6c79d67527136e2544b728/setuptools-40.4.3.zip'],
-    sha256 = 'acbc5740dd63f243f46c2b4b8e2c7fd92259c2ddb55a4115b16418a2ed371b15'
-)
-
-http_file(
-    name = 'python_setuptools_git',
-    urls = ['https://files.pythonhosted.org/packages/d9/c5/396c2c06cc89d4ce2d8ccf1d7e6cf31b33d4466a7c65a67a992adb3c6f29/setuptools-git-1.2.tar.gz'],
-    sha256 = 'ff64136da01aabba76ae88b050e7197918d8b2139ccbf6144e14d472b9c40445'
-)
-
-http_file(
     name = 'python_singledispatch',
     urls = ['https://files.pythonhosted.org/packages/d9/e9/513ad8dc17210db12cb14f2d4d190d618fb87dd38814203ea71c87ba5b68/singledispatch-3.4.0.3.tar.gz'],
     sha256 = '5b06af87df13818d14f08a028e42f566640aef80805c3b50c5056b086e3c2b9c'
-)
-
-http_file(
-    name = 'python_six',
-    urls = ['https://files.pythonhosted.org/packages/dd/bf/4138e7bfb757de47d1f4b6994648ec67a51efe58fa907c1e11e350cddfca/six-1.12.0.tar.gz'],
-    sha256 = 'd16a0141ec1a18405cd4ce8b4613101da75da0e9a7aec5bdd4fa804d0e0eba73'
 )
 
 http_file(
@@ -693,17 +677,6 @@ http_file(
     sha256 = 'a68ac5e15e76e7e5dd2b8f94007233e01effe3e50e8daddf69acfd81cb686baf'
 )
 
-http_file(
-    name = 'python_wrapt',
-    urls = ['https://files.pythonhosted.org/packages/a0/47/66897906448185fcb77fc3c2b1bc20ed0ecca81a0f2f88eda3fc5a34fc3d/wrapt-1.10.11.tar.gz'],
-    sha256 = 'd4d560d479f2c21e1b5443bbd15fe7ec4b37fe7e53d335d3b9b0a7b1226fe3c6'
-)
-
-http_file(
-    name = 'python_websocket_client',
-    urls = ['https://files.pythonhosted.org/packages/fb/1f/9acd71b77e66fafb19cfb023e50cbb7ed2c3be3c72db999162bd36c518c4/websocket_client-0.53.0.tar.gz'],
-    sha256 = 'c42b71b68f9ef151433d6dcc6a7cb98ac72d2ad1e3a74981ca22bc5d9134f166'
-)
 
 http_file(
     name = 'module_manager',

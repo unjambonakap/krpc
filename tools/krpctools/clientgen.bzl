@@ -8,8 +8,8 @@ def _impl(ctx):
         inputs = [defs],
         outputs = [output],
         progress_message = 'Generating %s code for %s service' % (language, service),
-        executable = ctx.file._clientgen,
-        arguments = [language, service, defs.path, '--output=%s' % output.path]
+        executable = '/home/benoit/.virtualenvs/env3.9/bin/python',
+        arguments = [ '-m', 'krpctools.clientgen.__init__', language, service, defs.path, '--output=%s' % output.path]
     )
 
 clientgen = rule(
@@ -19,11 +19,11 @@ clientgen = rule(
         'defs': attr.label(allow_single_file=True),
         'out': attr.output(mandatory=True),
         'language': attr.string(mandatory=True),
-        '_clientgen': attr.label(default=Label('//tools/krpctools:clientgen'),
-                                 executable=True, allow_single_file=True, cfg='host')
     },
     output_to_genfiles = True
 )
+        #'_clientgen': attr.label(default=Label('//tools/krpctools:clientgen'),
+         #                        executable=True, allow_single_file=True, cfg='host')
 
 def clientgen_csharp(name, service, defs, out, visibility = []):
     clientgen(

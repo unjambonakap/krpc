@@ -18,12 +18,14 @@ bazel build \
     //service/DockingCamera \
     //tools/cslibs \
     //tools/TestingTools
+bazel query 'deps(//tools/build/ksp:external_refs)' 
+libs_deps=$(bazel query 'deps(//tools/build/ksp:external_refs)' |grep dll | sed s@//lib:extra@@ | xargs -I{} sh -c "basename {} | sed s@^@bazel-bin/tools/build/ksp/@")
+echo "DEPS >> $libs_deps"
 
 rm -f $GAMEDATA/KRPC.dll
 rm -rf $GAMEDATA
 mkdir -p $GAMEDATA
 cp -R -L \
-    bazel-genfiles/kRPC.version \
     bazel-bin/server/KRPC.dll \
     bazel-bin/server/KRPC.xml \
     bazel-bin/server/src/icons \
@@ -49,6 +51,7 @@ cp -R -L \
     bazel-bin/tools/TestingTools/TestingTools.dll \
     bazel-bin/tools/TestingTools/TestingTools.xml \
     service/SpaceCenter/src/module-manager.cfg \
+    $libs_deps \
     $GAMEDATA/
 cp -L bazel-bin/tools/cslibs/ModuleManager.4.1.3.dll $GAMEDATA/../
 

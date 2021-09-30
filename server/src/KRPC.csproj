@@ -93,6 +93,14 @@
       <HintPath>..\..\generated_deps\tools\cslibs\KRPC.IO.Ports.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="iCSharp.Kernel">
+      <HintPath>../../lib/extra/icsharp.kernel/lib/net40/iCSharp.Kernel.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="iCSharp.Messages">
+      <HintPath>../../lib/extra/icsharp.kernel/lib/net40/iCSharp.Messages.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\generated_deps\server\AssemblyInfo.cs">
@@ -102,6 +110,7 @@
       <Link>KRPC.cs</Link>
     </Compile>
     <Compile Include="Addon.cs" />
+    <Compile Include="Kernel.cs" />
     <Compile Include="Compatibility.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="ConfigurationFile.cs" />

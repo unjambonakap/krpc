@@ -1,0 +1,6 @@
+wrapt
+websocket_client
+markupsafe
+six
+jinja2
+protobuf==3.9.1

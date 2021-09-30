@@ -1,0 +1,5 @@
+[console_scripts]
+krpc-clientgen = krpctools.clientgen:main
+krpc-docgen = krpctools.docgen:main
+krpc-servicedefs = krpctools.servicedefs:main
+
