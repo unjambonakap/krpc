@@ -13,6 +13,7 @@ namespace KRPC.Service
     sealed class RequestContinuation : Continuation<Response>
     {
         public IClient<Request,Response> Client { get; private set; }
+        public Request Request { get; }
 
         ProcedureCallContinuation call;
         readonly ProcedureCallContinuation[] calls;
@@ -22,6 +23,7 @@ namespace KRPC.Service
         public RequestContinuation (IClient<Request,Response> client, Request request)
         {
             Client = client;
+            Request = request;
             int size = request.Calls.Count;
             if (size == 1) {
                 // Special case for requests with a single call, to avoid allocating arrays

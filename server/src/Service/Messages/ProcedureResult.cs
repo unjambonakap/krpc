@@ -1,3 +1,5 @@
+using KRPC.Service.Scanner;
+
 namespace KRPC.Service.Messages
 {
     #pragma warning disable 1591
@@ -22,6 +24,8 @@ namespace KRPC.Service.Messages
                 HasError = true;
             }
         }
+
+        public ProcedureSignature Procedure { get; set; }
 
         object value_;
 

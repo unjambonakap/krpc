@@ -7,7 +7,7 @@ namespace KRPC.Service.Messages
     {
         public string Name { get; private set; }
 
-        public Type Type { get; private set; }
+        public RPCInterfaceType Type { get; private set; }
 
         public bool HasDefaultValue { get; private set; }
 
@@ -21,7 +21,7 @@ namespace KRPC.Service.Messages
 
         object defaultValue;
 
-        public Parameter (string name, Type type)
+        public Parameter (string name, RPCInterfaceType type)
         {
             Name = name;
             Type = type;

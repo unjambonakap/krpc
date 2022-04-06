@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using KRPC.Continuations;
+using KRPC.Server.ProtocolBuffers;
 using KRPC.Service.Attributes;
 using KRPC.Service.Messages;
 using LinqExpression = System.Linq.Expressions.Expression;
@@ -65,6 +66,11 @@ namespace KRPC.Service.KRPC
             status.TimePerStreamUpdate = core.TimePerStreamUpdate;
             return status;
         }
+        public static void DispServices(){
+            Console.WriteLine(GetServices().ToProtobufMessage());
+
+        
+        }
 
         /// <summary>
         /// Returns information on all services, procedures, classes, properties etc. provided by the server.
@@ -81,7 +87,7 @@ namespace KRPC.Service.KRPC
                 foreach (var procedureSignature in serviceSignature.Procedures.Values) {
                     var procedure = new Procedure (procedureSignature.Name);
                     if (procedureSignature.HasReturnType) {
-                        procedure.ReturnType = procedureSignature.ReturnType;
+                        procedure.ReturnType = procedureSignature.ReturnType.RemoteType;
                         procedure.ReturnIsNullable = procedureSignature.ReturnIsNullable;
                     }
                     foreach (var parameterSignature in procedureSignature.Parameters) {

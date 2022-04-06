@@ -79,6 +79,7 @@ namespace KRPC.SpaceCenter.Services
         [KRPCProperty]
         public float Amount {
             get { return (float)InternalResource.amount; }
+            set { InternalResource.amount = value;}
         }
 
         /// <summary>

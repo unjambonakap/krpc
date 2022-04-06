@@ -8,7 +8,7 @@ def _impl(ctx):
         inputs = [defs],
         outputs = [output],
         progress_message = 'Generating %s code for %s service' % (language, service),
-        executable = '/home/benoit/.virtualenvs/env3.9/bin/python',
+        executable = '/home/benoit/.virtualenvs/env3.10/bin/python',
         arguments = [ '-m', 'krpctools.clientgen.__init__', language, service, defs.path, '--output=%s' % output.path]
     )
 

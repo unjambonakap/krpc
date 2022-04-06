@@ -73,6 +73,13 @@ namespace KRPC.SpaceCenter.Services
                 return bodies;
             }
         }
+        [KRPCMethod]
+        public double SpeedOfSoundAt(double altitude){
+            var pressure = InternalBody.GetPressure(altitude);
+            var rho = StockAerodynamics.GetDensity(altitude, InternalBody);
+            var soundSpeed = InternalBody.GetSpeedOfSound(pressure, rho);
+            return soundSpeed;
+        }
 
         /// <summary>
         /// The mass of the body, in kilograms.
@@ -192,6 +199,38 @@ namespace KRPC.SpaceCenter.Services
             var sinLongitude = Math.Sin (longitudeRadians);
             var position = new Vector3d (cosLatitude * cosLongitude, sinLatitude, cosLatitude * sinLongitude);
             return InternalBody.pqsController.GetSurfaceHeight (position) - InternalBody.pqsController.radius;
+        }
+
+        [KRPCMethod]
+        public Tuple3 PosToBodyVelocity (Tuple3 pos, ReferenceFrame frame)
+        {
+            return InternalBody.getRFrmVel(frame.PositionToWorldSpace(pos.ToVector())).ToTuple();
+        }
+
+        [KRPCMethod]
+        public Tuple3 SpeedToBodyVelocity2 (Tuple3 pos, Tuple3 vel, ReferenceFrame frame)
+        {
+            if (frame==ReferenceFrame){
+                return vel;
+            } else {
+            var worldPos = frame.PositionToWorldSpace(pos.ToVector());
+            var worldVel = frame.VelocityToWorldSpace(pos.ToVector(), vel.ToVector());
+
+            return ReferenceFrame.VelocityFromWorldSpace(worldPos, worldVel).ToTuple();
+            }
+        }
+
+        [KRPCMethod]
+        public Tuple3 SpeedToBodyVelocity (Tuple3 pos, Tuple3 vel, ReferenceFrame frame)
+        {
+            if (frame==ReferenceFrame){
+                return vel;
+            } else {
+            var worldPos = frame.PositionToWorldSpace(pos.ToVector());
+            var worldVel = frame.VelocityToWorldSpace(pos.ToVector(), vel.ToVector());
+
+            return ReferenceFrame.VelocityFromWorldSpace(worldPos, worldVel).ToTuple();
+            }
         }
 
         /// <summary>

@@ -46,6 +46,10 @@
       <HintPath>..\..\..\lib\ksp\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>..\..\..\lib\ksp\KSP_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.AnimationModule">
       <HintPath>..\..\..\lib\ksp\KSP_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
       <Private>False</Private>
@@ -209,6 +213,7 @@
     <Compile Include="Services\Vessel.cs" />
     <Compile Include="Services\VesselSituation.cs" />
     <Compile Include="Services\VesselType.cs" />
+    <Compile Include="Services\VesselSpawner.cs" />
     <Compile Include="Services\WarpMode.cs" />
     <Compile Include="Services\Waypoint.cs" />
     <Compile Include="Services\WaypointManager.cs" />

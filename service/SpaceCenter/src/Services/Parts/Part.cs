@@ -26,6 +26,8 @@ namespace KRPC.SpaceCenter.Services.Parts
         /// <summary>
         /// Create a part object for the given KSP part
         /// </summary>
+        [KRPCProperty]
+        public KRPCTransform Transform => new KRPCTransform(InternalPart.transform);
         public Part (global::Part part)
         {
             if (ReferenceEquals (part, null))

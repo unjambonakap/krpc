@@ -125,7 +125,7 @@ namespace KRPC.Service.KRPC
                 servicesExpr, executeCallMethod,
                 new[] { procedureExpr, argumentsExpr });
             var value = LinqExpression.Convert(
-                LinqExpression.Property(result, "Value"), procedure.ReturnType);
+                LinqExpression.Property(result, "Value"), procedure.ReturnType.LocalType);
             return new Expression(value);
         }
 

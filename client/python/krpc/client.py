@@ -39,6 +39,9 @@ class Client(object):
     """
 
     def __init__(self, rpc_connection, stream_connection):
+        self.lock_update = False
+        self.wait_req_id = 0
+        self.req_id = 0
         self._types = Types()
         self._rpc_connection = rpc_connection
         self._rpc_connection_lock = threading.Lock()
@@ -160,6 +163,20 @@ class Client(object):
             # A class method
             return func._return_type
 
+
+    def nop(self, req_phys_loop=False):
+        request = KRPC.Request()
+        request.lock_update = self.lock_update
+        request.wait_req_id = self.wait_req_id
+        request.req_id = self.req_id
+        request.req_phys_loop = req_phys_loop;
+        request.calls.extend([])
+
+        # Send the request
+        with self._rpc_connection_lock:
+            self._rpc_connection.send_message(request)
+            response = self._rpc_connection.receive_message(KRPC.Response)
+
     def _invoke(self, service, procedure, args,
                 param_names, param_types, return_type):
         """ Execute an RPC """
@@ -168,6 +185,9 @@ class Client(object):
         call = self._build_call(service, procedure, args,
                                 param_names, param_types, return_type)
         request = KRPC.Request()
+        request.lock_update = self.lock_update
+        request.wait_req_id = self.wait_req_id
+        request.req_id = self.req_id
         request.calls.extend([call])
 
         # Send the request

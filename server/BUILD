@@ -1,4 +1,4 @@
-load('//tools/build:csharp.bzl', 'csharp_library', 'csharp_nunit_test', 'csharp_gendarme_test', 'csharp_assembly_info')
+load('//tools/build:csharp.bzl', 'csharp_library', 'csharp_nunit_test', 'csharp_gendarme_test', 'csharp_assembly_info', 'csharp_binary')
 load('//tools/ServiceDefinitions:build.bzl', 'service_definitions')
 load('//tools/build:image.bzl', 'png_images')
 load('//:config.bzl', 'version', 'ksp_version_max', 'ksp_version_min', 'assembly_version', 'author')
@@ -112,12 +112,15 @@ csharp_assembly_info(
 
 test_deps = [
     '//server:KRPC',
+    '//service/SpaceCenter:KRPC.SpaceCenter',
     '//tools/build/mono-4.5:Moq',
     '//tools/build/ksp:Google.Protobuf',
     '//tools/build/ksp:Assembly-CSharp',
     '//tools/build/ksp:Assembly-CSharp-firstpass',
     '//tools/build/ksp:UnityEngine',
     '//tools/build/ksp:UnityEngine.UI',
+    '//tools/build/ksp:UnityEngine.CoreModule',
+    '//tools/build/ksp:UnityEngine.SharedInternalsModule',
     '//tools/build/ksp:KRPC.IO.Ports',
     '//tools/build/mono-4.5:mscorlib',
     '//tools/build/mono-4.5:System',
@@ -133,6 +136,15 @@ csharp_library(
     srcs = glob(['test/**/*.cs']) + [':TestAssemblyInfo'],
     deps = test_deps,
     nunit_test = True,
+    optimize = False,
+    define = ['CODE_ANALYSIS'],
+    nowarn = ['1591'],
+    visibility = ['//:__pkg__']
+)
+csharp_binary(
+    name = 'KRPC.Test2',
+    srcs = glob(['test/Main.cs']),
+    deps = test_deps,
     optimize = False,
     define = ['CODE_ANALYSIS'],
     nowarn = ['1591'],

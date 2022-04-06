@@ -9,6 +9,7 @@ service_deps = [
     '//tools/build/ksp:UnityEngine.AnimationModule',
     '//tools/build/ksp:UnityEngine.CoreModule',
     '//tools/build/ksp:UnityEngine.IMGUIModule',
+    '//tools/build/ksp:UnityEngine.InputLegacyModule',
     '//tools/build/ksp:UnityEngine.PhysicsModule',
     '//tools/build/ksp:UnityEngine.TextRenderingModule',
     '//tools/build/ksp:UnityEngine.UI',

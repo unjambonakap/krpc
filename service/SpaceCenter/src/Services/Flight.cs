@@ -26,11 +26,13 @@ namespace KRPC.SpaceCenter.Services
     {
         readonly Guid vesselId;
         readonly ReferenceFrame referenceFrame;
+        readonly Vessel curVessel;
 
         [SuppressMessage ("Gendarme.Rules.Maintainability", "VariableNamesShouldNotMatchFieldNamesRule")]
         internal Flight (global::Vessel vessel, ReferenceFrame referenceFrame)
         {
             vesselId = vessel.id;
+            curVessel = new Vessel(vessel);
             this.referenceFrame = referenceFrame;
         }
 
@@ -57,24 +59,29 @@ namespace KRPC.SpaceCenter.Services
             get { return FlightGlobalsExtensions.GetVesselById (vesselId); }
         }
 
+        [KRPCProperty]
+        public ReferenceFrame ReferenceFrame => referenceFrame;
         /// <summary>
         /// Velocity of the vessel in world space
         /// </summary>
-        Vector3d WorldVelocity {
+        [KRPCProperty]
+        public Vector3d WorldVelocity {
             get { return InternalVessel.GetOrbit ().GetVel (); }
         }
 
         /// <summary>
         /// Position of the vessels center of mass in world space
         /// </summary>
-        Vector3d WorldCoM {
+        [KRPCProperty]
+        public Vector3d WorldCoM {
             get { return InternalVessel.CoM; }
         }
 
         /// <summary>
         /// Direction the vessel is pointing in in world space
         /// </summary>
-        Vector3d WorldDirection {
+        [KRPCProperty]
+        public Vector3d WorldDirection {
             get { return InternalVessel.ReferenceTransform.up; }
         }
 
@@ -359,6 +366,20 @@ namespace KRPC.SpaceCenter.Services
         }
 
         /// <summary>
+        /// The rotation of the vessel, in the reference frame <see cref="ReferenceFrame"/>
+        /// </summary>
+        /// <returns>The rotation as a quaternion of the form <math>(x, y, z, w)</math>.</returns>
+        [KRPCMethod]
+        public void SetRotation(Tuple4 rot) {
+            curVessel.SetRotation(rot, referenceFrame);
+        }
+
+        [KRPCMethod]
+        public void SetPosition(Tuple3 pos) {
+            curVessel.SetPosition(pos, referenceFrame);
+        }
+
+        /// <summary>
         /// The direction that the vessel is pointing in,
         /// in the reference frame <see cref="ReferenceFrame"/>.
         /// </summary>
@@ -526,6 +547,20 @@ namespace KRPC.SpaceCenter.Services
         /// <returns>A vector pointing in the direction that the force acts,
         /// with its magnitude equal to the strength of the force in Newtons.</returns>
         [KRPCMethod]
+        public Tuple3 WorldRelativeVelocity(CelestialBody body, Tuple3 position, Tuple3 velocity)
+        {
+            var vessel = InternalVessel;
+            var worldVelocity = referenceFrame.VelocityToWorldSpace(position.ToVector(), velocity.ToVector());
+            var worldPosition = referenceFrame.PositionToWorldSpace(position.ToVector());
+            return (worldVelocity - body.InternalBody.getRFrmVel(worldPosition)).ToTuple();
+        }
+
+        [KRPCMethod]
+        public Vector3 SimulateAerodynamicForceLocalAtByAlt(CelestialBody body, Vector3 velocity, double altitude)
+        {
+            return StockAerodynamics.SimAeroForceByAlt(body, curVessel, velocity, altitude);
+        }
+        [KRPCMethod]
         public Tuple3 SimulateAerodynamicForceAt(CelestialBody body, Tuple3 position, Tuple3 velocity)
         {
             if (ReferenceEquals (body, null))
@@ -536,7 +571,7 @@ namespace KRPC.SpaceCenter.Services
             Vector3 worldForce;
             if (!FAR.IsAvailable) {
                 var relativeWorldVelocity = worldVelocity - body.InternalBody.getRFrmVel(worldPosition);
-                worldForce = StockAerodynamics.SimAeroForce(body.InternalBody, vessel, relativeWorldVelocity, worldPosition);
+                worldForce = StockAerodynamics.SimAeroForce(body, curVessel, relativeWorldVelocity, worldPosition);
             } else {
                 Vector3 torque;
                 var altitude = (worldPosition - body.InternalBody.position).magnitude - body.InternalBody.Radius;

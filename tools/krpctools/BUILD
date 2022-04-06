@@ -61,7 +61,6 @@ py_sdist(
     glob(['krpctools/**/*.py', 'krpctools/**/*.tmpl', 'krpctools/test/*.json',
           'krpctools/test/**/*.txt', 'krpctools/test/**/*.rst']),
     path_map = {
-        'version.py': 'krpctools/version.py',
         'tools/krpctools/': '',
         'tools/ServiceDefinitions/ServiceDefinitions.exe': 'krpctools/bin/ServiceDefinitions.exe',
         'tools/ServiceDefinitions/KRPC.dll': 'krpctools/bin/KRPC.dll',

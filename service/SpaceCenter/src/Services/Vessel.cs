@@ -20,6 +20,14 @@ namespace KRPC.SpaceCenter.Services
     /// Created using <see cref="SpaceCenter.ActiveVessel"/> or <see cref="SpaceCenter.Vessels"/>.
     /// </summary>
     [KRPCClass (Service = "SpaceCenter")]
+    public class KspPart {
+        private Part _part;
+
+        public KspPart(Part part){
+            _part = part;
+        }
+    }
+    [KRPCClass (Service = "SpaceCenter")]
     [SuppressMessage ("Gendarme.Rules.Design.Generic", "DoNotExposeNestedGenericSignaturesRule")]
     [SuppressMessage ("Gendarme.Rules.Naming", "AvoidRedundancyInMethodNameRule")]
     public class Vessel : Equatable<Vessel>
@@ -259,8 +267,9 @@ namespace KRPC.SpaceCenter.Services
             get { return InternalVessel.parts.Sum(part => part.DryMass()); }
         }
 
-        IEnumerable<Parts.Engine> ActiveEngines {
-            get { return Parts.Engines.Where (e => e.Active); }
+        [KRPCProperty (GameScene = GameScene.Flight)]
+        public IList<Parts.Engine> ActiveEngines {
+            get { return Parts.Engines.Where (e => e.Active).ToList(); }
         }
 
         /// <summary>
@@ -372,6 +381,9 @@ namespace KRPC.SpaceCenter.Services
         public IList<double> InertiaTensor {
             get { return ComputeInertiaTensor ().ToList (); }
         }
+
+        [KRPCProperty]
+        public KRPCTransform Transform => new KRPCTransform(InternalVessel.transform);
 
         /// <summary>
         /// Computes the inertia tensor of the vessel. Uses the parallel axis theorem to
@@ -676,6 +688,35 @@ namespace KRPC.SpaceCenter.Services
             if (ReferenceEquals (referenceFrame, null))
                 throw new ArgumentNullException (nameof (referenceFrame));
             return referenceFrame.RotationFromWorldSpace (InternalVessel.ReferenceTransform.rotation).ToTuple ();
+        }
+
+        /// <summary>
+        /// The rotation of the vessel, in the given reference frame.
+        /// </summary>
+        /// <returns>The rotation as a quaternion of the form <math>(x, y, z, w)</math>.</returns>
+        /// <param name="referenceFrame">The reference frame that the returned
+        /// rotation is in.</param>
+        [KRPCMethod (GameScene = GameScene.Flight)]
+        public void SetRotation (Tuple4 rot, ReferenceFrame referenceFrame)
+        {
+
+            if (ReferenceEquals (referenceFrame, null))
+                throw new ArgumentNullException (nameof (referenceFrame));
+            InternalVessel.SetRotation(referenceFrame.RotationToWorldSpace (rot.ToQuaternionF()));
+        }
+
+        /// <summary>
+        /// The rotation of the vessel, in the given reference frame.
+        /// </summary>
+        /// <returns>The rotation as a quaternion of the form <math>(x, y, z, w)</math>.</returns>
+        /// <param name="referenceFrame">The reference frame that the returned
+        /// rotation is in.</param>
+        [KRPCMethod (GameScene = GameScene.Flight)]
+        public void SetPosition (Tuple3 pos, ReferenceFrame referenceFrame)
+        {
+            if (ReferenceEquals (referenceFrame, null))
+                throw new ArgumentNullException (nameof (referenceFrame));
+            InternalVessel.SetPosition(referenceFrame.PositionToWorldSpace (pos.ToVector()));
         }
 
         /// <summary>

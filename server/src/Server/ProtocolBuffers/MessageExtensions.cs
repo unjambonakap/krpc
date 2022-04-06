@@ -34,8 +34,11 @@ namespace KRPC.Server.ProtocolBuffers
         public static Schema.KRPC.ProcedureResult ToProtobufMessage (this ProcedureResult procedureResult)
         {
             var result = new Schema.KRPC.ProcedureResult ();
-            if (procedureResult.HasValue)
-                result.Value = Encoder.Encode (procedureResult.Value);
+            if (procedureResult.HasValue){
+                var obj = procedureResult.Value;
+                obj = procedureResult?.Procedure?.ReturnType?.Local2Remote?.Invoke(obj) ?? obj;
+                result.Value = Encoder.Encode (obj);
+            }
             if (procedureResult.HasError)
                 result.Error = procedureResult.Error.ToProtobufMessage ();
             return result;
@@ -140,6 +143,7 @@ namespace KRPC.Server.ProtocolBuffers
             result.Documentation = exception.Documentation;
             return result;
         }
+        public static Schema.KRPC.Type ToProtobufMessage (this RPCInterfaceType type) => type.RemoteType.ToProtobufMessage();
 
         [SuppressMessage ("Gendarme.Rules.Maintainability", "AvoidComplexMethodsRule")]
         [SuppressMessage ("Gendarme.Rules.Performance", "AvoidRepetitiveCallsToPropertiesRule")]
@@ -260,6 +264,10 @@ namespace KRPC.Server.ProtocolBuffers
             var result = new Request ();
             foreach (var call in request.Calls)
                 result.Calls.Add (call.ToMessage ());
+            result.LockUpdate = request.LockUpdate;
+            result.WaitReqId = request.WaitReqId;
+            result.ReqId = request.ReqId;
+            result.ReqPhysLoop = request.ReqPhysLoop;
             return result;
         }
 
@@ -284,9 +292,12 @@ namespace KRPC.Server.ProtocolBuffers
             return result;
         }
 
-        public static Argument ToMessage (this Schema.KRPC.Argument argument, Type type)
+        public static Argument ToMessage (this Schema.KRPC.Argument argument, RPCInterfaceType type)
         {
-            return new Argument (argument.Position, Encoder.Decode (argument.Value, type));
+
+            var obj= Encoder.Decode (argument.Value, type.RemoteType);
+            obj = type.Remote2Local?.Invoke(obj) ?? obj;
+            return new Argument (argument.Position, obj);
         }
     }
 }

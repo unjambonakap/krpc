@@ -80,6 +80,16 @@ namespace KRPC.SpaceCenter.ExtensionMethods
             return new QuaternionD (t.Item1, t.Item2, t.Item3, t.Item4);
         }
 
+        public static Quaternion ToQuaternion (this QuaternionD t)
+        {
+            return new Quaternion ((float)t.x, (float)t.y, (float)t.z, (float)t.w);
+        }
+
+        public static QuaternionD ToQuaternionF (this Tuple4 t)
+        {
+            return new Quaternion ((float)t.Item1, (float)t.Item2, (float)t.Item3, (float)t.Item4);
+        }
+
         /// <summary>
         /// Convert a Matrix4x4 (simulating a Matrix3x3) to a tuple of tuples
         /// </summary>

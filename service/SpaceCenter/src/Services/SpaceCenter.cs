@@ -17,6 +17,39 @@ using Tuple4 = KRPC.Utils.Tuple<double, double, double, double>;
 
 namespace KRPC.SpaceCenter.Services
 {
+    [KRPCClass(Service = "SpaceCenter", GameScene = GameScene.Flight)]
+    public class KRPCCheatOptions {
+        public bool UnbreakableJoints { get => CheatOptions.UnbreakableJoints; set => CheatOptions.UnbreakableJoints = value; } 
+        public bool IgnoreMaxTemperature { get => CheatOptions.IgnoreMaxTemperature; set => CheatOptions.IgnoreMaxTemperature = value; } 
+        public bool NoCrashDamage { get => CheatOptions.NoCrashDamage; set => CheatOptions.NoCrashDamage = value; } 
+
+    }
+
+    [KRPCClass (Service = "SpaceCenter")]
+    public class TimeWarpHelper {
+        public TimeWarp TimeWarp => TimeWarp.fetch;
+    [KRPCProperty]
+        public bool WarpMode {
+            get=> TimeWarp.Mode == TimeWarp.Modes.HIGH;
+            set=> TimeWarp.Mode = value ? TimeWarp.Modes.HIGH :TimeWarp.Modes.LOW;
+        }
+[KRPCProperty]
+        public int WarpRateCount => TimeWarp.warpRates.Length;
+[KRPCProperty]
+        public int PhysicalWarpRateCount => TimeWarp.physicsWarpRates.Length;
+
+[KRPCMethod]
+        public void  SetWarpRate(int pos, float rate) => TimeWarp.warpRates[pos] = rate;
+[KRPCMethod]
+        public void  SetPhysicalWarpRate(int pos, float rate) => TimeWarp.physicsWarpRates[pos] = rate;
+[KRPCMethod]
+        public void SetUpdate(float delta){
+            Time.fixedDeltaTime = delta;
+        }
+        [KRPCProperty]
+        public float FixedDeltaTime  => Time.fixedDeltaTime;
+    }
+
     /// <summary>
     /// Provides functionality to interact with Kerbal Space Program. This includes controlling
     /// the active vessel, managing its resources, planning maneuver nodes and auto-piloting.
@@ -31,6 +64,9 @@ namespace KRPC.SpaceCenter.Services
         public static GameMode GameMode {
             get { return HighLogic.CurrentGame.Mode.ToGameMode(); }
         }
+
+        [KRPCProperty] public static StockAerodynamics Aerodynamics => new StockAerodynamics();
+        [KRPCProperty] public static KRPCCheatOptions Cheats => new KRPCCheatOptions();
 
         /// <summary>
         /// The current amount of science.
@@ -209,6 +245,9 @@ namespace KRPC.SpaceCenter.Services
             get { return new ContractManager(); }
         }
 
+        [KRPCProperty (GameScene = GameScene.Flight)]
+        public static TimeWarpHelper TimeWarpHelper => new TimeWarpHelper();
+
         /// <summary>
         /// The Alarm Clock Module.
         /// </summary>
@@ -246,7 +285,7 @@ namespace KRPC.SpaceCenter.Services
         [SuppressMessage ("Gendarme.Rules.Smells", "AvoidLargeClassesRule")]
         [SuppressMessage ("Gendarme.Rules.Maintainability", "AvoidLackOfCohesionOfMethodsRule")]
         sealed class LaunchConfig {
-            public LaunchConfig(string craftDirectory, string name, string launchSite, bool recover, string crew, string flagUrl) {
+            public LaunchConfig(string craftDirectory, string name, string launchSite, bool recover, string crew, string flagUrl, bool pathMode=false) {
                 LaunchSite = launchSite;
                 Recover = recover;
                 FlagUrl = string.IsNullOrEmpty(flagUrl) ? EditorLogic.FlagURL : flagUrl;
@@ -257,7 +296,7 @@ namespace KRPC.SpaceCenter.Services
                     EditorDriver.editorFacility = EditorFacility.SPH;
                 else
                     throw new ArgumentException("Invalid craftDirectory, should be VAB or SPH");
-                Path = GetFullCraftDirectory(craftDirectory) + "/" + name + ".craft";
+                Path = pathMode?  name : GetFullCraftDirectory(craftDirectory) + "/" + name + ".craft";
                 template = ShipConstruction.LoadTemplate(Path);
                 if (template == null)
                     throw new InvalidOperationException("Failed to load template for vessel");
@@ -333,7 +372,6 @@ namespace KRPC.SpaceCenter.Services
             public bool Recover { get; private set; }
             public string Path { get; private set; }
             public string FlagUrl { get; private set; }
-
             readonly ShipTemplate template;
             readonly public VesselCrewManifest manifest;
             readonly SpaceCenterFacility facility;
@@ -368,6 +406,14 @@ namespace KRPC.SpaceCenter.Services
         {
             CloseDialogs();
             var config = new LaunchConfig(craftDirectory, name, launchSite, recover, crew, flagUrl);
+            config.RunPreFlightChecks();
+            throw new YieldException (new ParameterizedContinuationVoid<LaunchConfig> (WaitForVesselPreFlightChecks, config));
+        }
+
+        [KRPCProcedure]
+        public static void LaunchVessel2 (string craftDirectory, string name, string launchSite, bool recover = true)
+        {
+            var config = new LaunchConfig(craftDirectory, name, launchSite, recover, pathMode: true);
             config.RunPreFlightChecks();
             throw new YieldException (new ParameterizedContinuationVoid<LaunchConfig> (WaitForVesselPreFlightChecks, config));
         }

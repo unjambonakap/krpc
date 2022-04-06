@@ -119,6 +119,12 @@ namespace KRPC.SpaceCenter.Services
             return PartResources.Where (r => r.resourceName == name).Select (r => new Resource (r)).ToList ();
         }
 
+        [KRPCMethod]
+        public IList<Resource> WithResourceById (int id)
+        {
+            return PartResources.Where (r => r.info.id == id).Select (r => new Resource (r)).ToList();
+        }
+
         /// <summary>
         /// A list of resource names that can be stored.
         /// </summary>

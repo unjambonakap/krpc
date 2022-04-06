@@ -4,12 +4,13 @@ using System.Linq;
 using System.Reflection;
 using KRPC.Service.Attributes;
 using KRPC.Utils;
+using UnityEngine;
 
 namespace KRPC.Service
 {
-    sealed class ProcedureParameter
+    public sealed class ProcedureParameter
     {
-        public Type Type { get; private set; }
+        public RPCInterfaceType Type { get; private set; }
 
         public string Name { get; private set; }
 
@@ -22,7 +23,7 @@ namespace KRPC.Service
         [SuppressMessage ("Gendarme.Rules.Maintainability", "AvoidUnnecessarySpecializationRule")]
         public ProcedureParameter (MethodInfo method, ParameterInfo parameter)
         {
-            Type = parameter.ParameterType;
+            SetType(parameter.ParameterType);
             Name = parameter.Name;
             bool hasDefaultValue = parameter.IsOptional && (parameter.Attributes & ParameterAttributes.HasDefault) == ParameterAttributes.HasDefault;
             DefaultValue = hasDefaultValue ? parameter.DefaultValue : DBNull.Value;
@@ -31,16 +32,22 @@ namespace KRPC.Service
                 DefaultValue = defaultAttribute.Value;
         }
 
+        private void SetType(Type parameterType)
+        {
+            Type = new RPCInterfaceType(parameterType);
+
+        }
+
         public ProcedureParameter (Type type, string name)
         {
-            Type = type;
+            SetType(type);
             Name = name;
             DefaultValue = DBNull.Value;
         }
 
         public ProcedureParameter (Type type, string name, object defaultValue)
         {
-            Type = type;
+            SetType(type);
             Name = name;
             DefaultValue = defaultValue;
         }

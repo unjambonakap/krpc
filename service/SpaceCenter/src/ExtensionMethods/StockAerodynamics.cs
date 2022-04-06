@@ -27,13 +27,18 @@
  * be used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from the copyright holders.
  */
+using KRPC.SpaceCenter.Services;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using KRPC.Service;
+using KRPC.Service.Attributes;
 using UnityEngine;
 
 namespace KRPC.SpaceCenter.ExtensionMethods
 {
-    static class StockAerodynamics
+    [KRPCClass (Service = "SpaceCenter", GameScene = GameScene.Flight)]
+    public class StockAerodynamics
     {
         /// <summary>
         /// This function should return exactly the same value as Vessel.atmDensity, but is more generic because you
@@ -104,31 +109,43 @@ namespace KRPC.SpaceCenter.ExtensionMethods
             return body.GetPressure (altitude) * 1000d;
         }
 
-        public static Vector3 SimAeroForce(CelestialBody body, Vessel _vessel, Vector3 v_wrld_vel, Vector3 position)
+        [KRPCMethod]
+        public static Vector3 SimAeroForce(KRPC.SpaceCenter.Services.CelestialBody body, KRPC.SpaceCenter.Services.Vessel _vessel, Vector3 v_wrld_vel, Vector3 position)
         {
             //double latitude = body.GetLatitude(position) / 180.0 * Math.PI;
-            var altitude = (position - body.position).magnitude - body.Radius;
-            return SimAeroForce(body, _vessel, v_wrld_vel, altitude);
+            var altitude = (position - body.InternalBody.position).magnitude - body.EquatorialRadius;
+            return SimAeroForceByAlt(body, _vessel, v_wrld_vel, altitude);
+        }
+
+        [KRPCMethod]
+        public static Vector3 SimAeroForceByAlt(KRPC.SpaceCenter.Services.CelestialBody body, KRPC.SpaceCenter.Services.Vessel _vessel, Vector3 v_wrld_vel, double altitude)
+        {
+
+            var pressure = body.InternalBody.GetPressure(altitude);
+            var rho = GetDensity(altitude, body.InternalBody);
+            var soundSpeed = body.InternalBody.GetSpeedOfSound(pressure, rho);
+            return SimAeroForce2(_vessel, v_wrld_vel, pressure, rho, soundSpeed);
+
         }
 
         [SuppressMessage ("Gendarme.Rules.Exceptions", "DoNotSwallowErrorsCatchingNonSpecificExceptionsRule")]
         [SuppressMessage ("Gendarme.Rules.Smells", "AvoidLongMethodsRule")]
         [SuppressMessage ("Gendarme.Rules.Smells", "AvoidSwitchStatementsRule")]
-        public static Vector3 SimAeroForce(CelestialBody body, Vessel _vessel, Vector3 v_wrld_vel, double altitude)
+        [KRPCMethod]
+        public static Vector3 SimAeroForce2(KRPC.SpaceCenter.Services.Vessel vessel, Vector3 v_wrld_vel, double pressure, double density, double soundSpeed)
         {
-            var pressure = body.GetPressure(altitude);
+            var _vessel = vessel.InternalVessel;
             // Lift and drag for force accumulation.
             var total_lift = Vector3d.zero;
             var total_drag = Vector3d.zero;
 
+            double rho = density;
             // dynamic pressure for standard drag equation
-            var rho = GetDensity(altitude, body);
             var dyn_pressure = 0.0005 * rho * v_wrld_vel.sqrMagnitude;
 
             if (rho <= 0)
                 return Vector3.zero;
 
-            var soundSpeed = body.GetSpeedOfSound(pressure, rho);
             var mach = v_wrld_vel.magnitude / soundSpeed;
             if (mach > 25.0)
                 mach = 25.0;

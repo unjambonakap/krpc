@@ -10,7 +10,7 @@ namespace KRPC.Service.Scanner
     /// Signature information for a procedure, including procedure name,
     /// parameter types and return types.
     /// </summary>
-    sealed class ProcedureSignature : ISerializable
+    public sealed class ProcedureSignature : ISerializable
     {
         /// <summary>
         /// Name of the procedure, not including the service it is in.
@@ -47,7 +47,7 @@ namespace KRPC.Service.Scanner
 
         public bool HasReturnType { get; private set; }
 
-        public Type ReturnType { get; private set; }
+        public RPCInterfaceType ReturnType { get; private set; }
 
         public bool ReturnIsNullable { get; private set; }
 
@@ -75,7 +75,7 @@ namespace KRPC.Service.Scanner
             Parameters = handler.Parameters.Select (x => new ParameterSignature (FullyQualifiedName, x)).ToList ();
 
             var returnType = handler.ReturnType;
-            HasReturnType = (returnType != typeof(void));
+            HasReturnType = (returnType.LocalType != typeof(void));
             if (HasReturnType) {
                 ReturnType = returnType;
                 // Check it's a valid return type
@@ -120,7 +120,7 @@ namespace KRPC.Service.Scanner
             info.AddValue ("parameters", Parameters);
             if (ReturnType != null)
             {
-                info.AddValue("return_type", TypeUtils.SerializeType(ReturnType));
+                info.AddValue("return_type", TypeUtils.SerializeType(ReturnType.RemoteType));
                 info.AddValue("return_is_nullable", ReturnIsNullable);
             }
             if (GameScene != GameScene.All)

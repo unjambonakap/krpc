@@ -19,6 +19,57 @@ namespace KRPC.SpaceCenter.Services.Parts
     /// <remarks>
     /// For RCS thrusters <see cref="Part.RCS"/>.
     /// </remarks>
+
+    [KRPCClass (Service = "SpaceCenter")]
+    public class Gimbal {
+        private ModuleGimbal gimbal;
+
+        public Gimbal(ModuleGimbal gimbal)
+        {
+            this.gimbal = gimbal;
+        }
+        public bool Valid => gimbal !=null;
+
+        [KRPCProperty]
+        public bool EnableGimbal {
+            get => gimbal?.gimbalActive ?? false;
+            set {
+                gimbal.gimbalActive = value;
+            }
+        }
+
+        [KRPCProperty]
+        public float GimbalResponseSpeed {
+            get => gimbal.gimbalResponseSpeed;
+            set => gimbal.gimbalResponseSpeed = value;
+        }
+
+        [KRPCProperty]
+        public bool UseGimbalResponseSpeed {
+            get => gimbal?.useGimbalResponseSpeed ?? false;
+            set {
+                gimbal.useGimbalResponseSpeed = value;
+            }
+        }
+        [KRPCMethod]
+        public void SetGimbalRot(Quaternion rot)
+        {
+            for (int i=0; i< gimbal.gimbalTransforms.Count; ++i){
+                gimbal.gimbalTransforms[i].localRotation = gimbal.initRots[i] * rot;
+            }
+        }
+        [KRPCMethod]
+        public Quaternion Actuation2Rot(Vector2 actuation)
+        {
+            actuation.x *= (actuation.x < 0 ? gimbal.gimbalRangeXN : gimbal.gimbalRangeXP);
+            actuation.y *= (actuation.y < 0 ? gimbal.gimbalRangeYN : gimbal.gimbalRangeYP);
+            actuation *= gimbal.gimbalLimiter * 0.01f;
+            var rot = Quaternion.AngleAxis(actuation.x, gimbal.xMult * Vector3.right);
+            rot = rot * Quaternion.AngleAxis(actuation.y, gimbal.yMult * (gimbal.flipYZ ? Vector3.forward : Vector3.up));
+            return rot;
+        }
+
+    }
     [KRPCClass (Service = "SpaceCenter")]
     [SuppressMessage ("Gendarme.Rules.Maintainability", "AvoidLackOfCohesionOfMethodsRule")]
     public class Engine : Equatable<Engine>
@@ -60,6 +111,8 @@ namespace KRPC.SpaceCenter.Services.Parts
                 throw new ArgumentException ("Part does not have a ModuleEngines PartModule");
         }
 
+        [KRPCProperty]
+        public Gimbal Gimbal => new Gimbal(gimbal);
         /// <summary>
         /// Returns true if the objects are equal.
         /// </summary>
@@ -131,11 +184,60 @@ namespace KRPC.SpaceCenter.Services.Parts
             }
         }
 
+        [KRPCProperty]
+        public float CurThrust => CurrentEngine.resultingThrust;
+        [KRPCProperty]
+        public float CurFlow => CurrentEngine.requestedMassFlow;
+        [KRPCProperty]
+        public double StepMassFlow => CurrentEngine.MassFlow();
+        [KRPCProperty]
+        public double MaxFueldFlow => CurrentEngine.maxFuelFlow;
+        [KRPCProperty]
+        public double MinFueldFlow => CurrentEngine.minFuelFlow;
+
+
+        [KRPCMethod]
+        public List<float> GetMassFlowAndISP (CelestialBody body, float throttle, float altitude, float speed)
+        {
+            var engine = CurrentEngine;
+            var pressure = body.PressureAt(altitude);
+
+            // Compute fuel flow multiplier
+            float flowMultiplier = 1;
+            var massFlow = engine.maxFuelFlow *throttle;
+            var mach = body.SpeedOfSoundAt(altitude);
+            float velocityMultiplier = 1;
+            if (engine.useVelCurve && engine.velCurve != null)
+                velocityMultiplier = velocityMultiplier * engine.velCurve.Evaluate ((float)mach);
+
+            massFlow *= engine.flowMultiplier * velocityMultiplier;
+
+            if (engine.atmChangeFlow)
+                flowMultiplier = (float)(engine.part.atmDensity / 1.225d);
+            if (engine.useAtmCurve && engine.atmCurve != null)
+                flowMultiplier = engine.atmCurve.Evaluate (flowMultiplier);
+
+            var realIsp = engine.atmosphereCurve.Evaluate((float)pressure);
+            var atmDensity = body.DensityAt(altitude);
+            if(engine.useThrottleIspCurve) realIsp *= engine.GetThrottlingMult((float) pressure, throttle);
+            if (engine.useAtmCurveIsp) realIsp *= engine.atmCurveIsp.Evaluate((float)(atmDensity *  0.8163265147242933));
+            if (engine.useVelCurveIsp)realIsp *= engine.velCurveIsp.Evaluate((float)mach);
+
+            return new List<float>{massFlow, engine.g * engine.multIsp * realIsp*massFlow}.ToList();
+        }
         /// <summary>
         /// Get the thrust of the engine in Newtons, with the given throttle percentage
         /// and atmospheric pressure in atmospheres.
         /// </summary>
-        float GetThrust (float throttle, double pressure)
+        [KRPCMethod]
+        public float GetMassFlow (CelestialBody body, float throttle, float altitude, float speed) 
+            => GetMassFlowAndISP(body, throttle, altitude, speed)[0];
+        [KRPCMethod]
+        public float GetThrustAdv (CelestialBody body, float throttle, float altitude, float speed)
+            => GetMassFlowAndISP(body, throttle, altitude, speed)[1];
+
+        [KRPCMethod]
+        public float GetThrust (float throttle, double pressure)
         {
             var engine = CurrentEngine;
 
@@ -260,6 +362,10 @@ namespace KRPC.SpaceCenter.Services.Parts
         public float VacuumSpecificImpulse {
             get { return CurrentEngine.atmosphereCurve.Evaluate (0); }
         }
+        [KRPCProperty]
+        public double MixtureDensityRecip  => CurrentEngine.mixtureDensityRecip;
+        [KRPCProperty]
+        public double MixtureDensity=> CurrentEngine.mixtureDensity;
 
         /// <summary>
         /// The specific impulse of the engine at sea level on Kerbin, in seconds.
@@ -285,7 +391,7 @@ namespace KRPC.SpaceCenter.Services.Parts
             get
             {
                 UpdateConnectedResources();
-                return CurrentEngine.propellants.Select (propellant => new Propellant (propellant, CurrentEngine.part)).ToList ();
+                return CurrentEngine.propellants.Select (propellant => new Propellant (propellant, CurrentEngine.part, Part.Vessel)).ToList ();
             }
         }
 
@@ -331,6 +437,16 @@ namespace KRPC.SpaceCenter.Services.Parts
         [KRPCProperty]
         public float Throttle {
             get { return CurrentEngine.currentThrottle; }
+            set {
+                CurrentEngine.thrustPercentage = value * 100;  CurrentEngine.currentThrottle = value;
+            }
+        }
+        [KRPCProperty]
+        public float IndependantThrottle {
+            get { return CurrentEngine.independentThrottlePercentage / 100; }
+            set {
+                CurrentEngine.independentThrottlePercentage = value * 100;  CurrentEngine.currentThrottle = value;
+            }
         }
 
         /// <summary>
@@ -341,6 +457,13 @@ namespace KRPC.SpaceCenter.Services.Parts
         [KRPCProperty]
         public bool ThrottleLocked {
             get { return CurrentEngine.throttleLocked; }
+            set => CurrentEngine.throttleLocked = value;
+        }
+
+        [KRPCProperty]
+        public bool IsIndependantThrottle {
+            get { return CurrentEngine.independentThrottle; }
+            set => CurrentEngine.independentThrottle = value;
         }
 
         /// <summary>
@@ -399,6 +522,8 @@ namespace KRPC.SpaceCenter.Services.Parts
                 multiModeEngine.Invoke ("ModeEvent", 0);
             }
         }
+
+
 
         /// <summary>
         /// The available modes for the engine.

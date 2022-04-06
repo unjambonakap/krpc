@@ -132,6 +132,7 @@ namespace KRPC.Service
                 var result = new ProcedureResult ();
                 if (procedure.HasReturnType) {
                     CheckReturnValue (procedure, returnValue);
+                    result.Procedure = procedure;
                     result.Value = returnValue;
                 }
                 return result;
@@ -164,6 +165,7 @@ namespace KRPC.Service
             var result = new ProcedureResult ();
             if (procedure.HasReturnType) {
                 CheckReturnValue (procedure, returnValue);
+                result.Procedure = procedure;
                 result.Value = returnValue;
             }
             return result;
@@ -195,12 +197,12 @@ namespace KRPC.Service
                     if (!parameter.HasDefaultValue)
                         throw new RPCException ("Argument not specified for parameter " + parameter.Name + " in " + procedure.FullyQualifiedName);
                     argumentValues [i] = parameter.DefaultValue;
-                } else if (value != null && !type.IsInstanceOfType (value)) {
+                } else if (value != null && !type.LocalType.IsInstanceOfType (value)) {
                     // Check the type of the non-null argument value
                     throw new RPCException (
                         "Incorrect argument type for parameter " + parameter.Name + " in " + procedure.FullyQualifiedName + ". " +
                         "Expected an argument of type " + type + ", got " + value.GetType ());
-                } else if (value == null && !TypeUtils.IsAClassType (type)) {
+                } else if (value == null && !TypeUtils.IsAClassType (type.LocalType)) {
                     // Check the type of the null argument value
                     throw new RPCException (
                         "Incorrect argument type for parameter " + parameter.Name + " in " + procedure.FullyQualifiedName + ". " +
@@ -217,12 +219,12 @@ namespace KRPC.Service
         static void CheckReturnValue (ProcedureSignature procedure, object returnValue)
         {
             // Check if the type of the return value is valid
-            if (returnValue != null && !procedure.ReturnType.IsInstanceOfType (returnValue)) {
+            if (returnValue != null && !procedure.ReturnType.LocalType.IsInstanceOfType (returnValue)) {
                 throw new RPCException (
                     "Incorrect value returned by " + procedure.FullyQualifiedName + ". " +
                     "Expected a value of type " + procedure.ReturnType + ", got " + returnValue.GetType ());
             }
-            if (returnValue == null && !TypeUtils.IsAClassType (procedure.ReturnType)) {
+            if (returnValue == null && !TypeUtils.IsAClassType (procedure.ReturnType.RemoteType)) {
                 throw new RPCException (
                     "Incorrect value returned by " + procedure.FullyQualifiedName + ". " +
                     "Expected a value of type " + procedure.ReturnType + ", got null");

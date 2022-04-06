@@ -1,4 +1,5 @@
 using System;
+using KRPC.Service;
 using KRPC.Service.Attributes;
 using KRPC.Utils;
 
@@ -9,12 +10,17 @@ namespace KRPC.SpaceCenter.Services.Parts
     /// </summary>
     [KRPCClass (Service = "SpaceCenter")]
     public class Propellant : Equatable<Propellant>
+
     {
         readonly int resourceId;
         readonly uint partId;
+        private Vessel _vessel;
+        global::Part _part;
 
-        internal Propellant (global::Propellant propellantResource, global::Part underlyingPart)
+        internal Propellant (global::Propellant propellantResource, global::Part underlyingPart, Vessel vessel)
         {
+            _vessel = vessel;
+            _part = underlyingPart;
             propellantResource.UpdateConnectedResources(underlyingPart);
             resourceId = propellantResource.id;
             partId = underlyingPart.flightID;
@@ -55,12 +61,18 @@ namespace KRPC.SpaceCenter.Services.Parts
             }
         }
 
+
         /// <summary>
         /// The name of the propellant.
         /// </summary>
         [KRPCProperty]
         public string Name {
             get { return InternalPropellant.name; }
+        }
+
+        [KRPCProperty]
+        public int Id {
+            get { return InternalPropellant.id; }
         }
 
         /// <summary>

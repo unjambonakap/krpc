@@ -21,6 +21,7 @@ namespace KRPC.Service
             parameters = method.GetParameters ().Select (x => new ProcedureParameter (methodInfo, x)).ToArray ();
             methodArguments = new object[parameters.Length];
             ReturnIsNullable = returnIsNullable;
+            ReturnType = new RPCInterfaceType(methodInfo.ReturnType);
         }
 
         /// <summary>
@@ -38,8 +39,8 @@ namespace KRPC.Service
             get { return parameters; }
         }
 
-        public Type ReturnType {
-            get { return method.ReturnType; }
+        public RPCInterfaceType ReturnType {
+            get; private set;
         }
 
         public bool ReturnIsNullable { get; private set; }

@@ -29,6 +29,8 @@ namespace KRPC.Service
         /// <summary>
         /// Returns true if the given type can be used as a kRPC type.
         /// </summary>
+        public static bool IsAValidType (RPCInterfaceType type)
+        => IsAValidType(type.RemoteType);
         public static bool IsAValidType (Type type)
         {
             return IsAValueType (type) || IsAMessageType (type) || IsAClassType (type) || IsAnEnumType (type) || IsACollectionType (type);

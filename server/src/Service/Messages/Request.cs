@@ -6,6 +6,10 @@ namespace KRPC.Service.Messages
     public class Request : IMessage
     {
         public IList<ProcedureCall> Calls { get; private set; }
+        public bool LockUpdate {get;set;}
+        public ulong WaitReqId {get;set;}
+        public ulong ReqId {get;set;}
+        public bool ReqPhysLoop { get; internal set; }
 
         public Request ()
         {

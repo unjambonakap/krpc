@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using iCSharp.Kernel;
 using UnityEngine;
 using static KRPC.Utils.Logger;
+using System.Threading.Tasks;
 
 namespace KRPC
 {
@@ -21,10 +22,9 @@ namespace KRPC
         /// </summary>
         public static Kernel Instance { get; private set; }
         KernelLauncher _launcher;
-        public Queue<Action> Queue { get; set; } = new Queue<Action>();
-        public int UpdateCount { get; set; } = 0;
-        public int AwakeCount { get; set; } = 0;
         public KernelObj Current { get; set; }
+        public bool ExecuteOnMainThread {get;set;} = true;
+        public int AwakeCount { get; set; } = 0;
 
         public void Push(Action action) => Current?.Push(action);
         public void Register(KernelObj obj)
@@ -32,6 +32,12 @@ namespace KRPC
             Current = obj;
         }
 
+        public void PushAction(Action action){
+          if (ExecuteOnMainThread) Current?.Push(action).Wait();
+          else action();
+
+        }
+        public void UpdateInternal() => Current?.Update();
 
         /// <summary>
         /// Called whenever a scene change occurs. Ensures the server has been initialized,
@@ -49,13 +55,15 @@ namespace KRPC
             var config = new KernelLauncherConfig
             {
                 KernelConfigJsonWriteDirectory = "/tmp/kernels",
-                Name = "_krpc",
+                Name = "krpc",
             };
 
             _launcher = new KernelLauncher(config);
             var args = KernelLauncher.GetExtraParams();
+            args.PushAction = PushAction;
             args.Data = this;
             var confFile = _launcher.Create(args);
+
 
             Utils.Logger.WriteLine($"Wrote icsharp kernel conf to {confFile}", Severity.Info);
 
@@ -78,34 +86,39 @@ namespace KRPC
         /// The instance of the addon
         /// </summary>
         public static KernelObj Instance { get; private set; }
-        public Queue<Action> Queue { get; set; } = new Queue<Action>();
+        public Queue<Task> Queue { get; set; } = new Queue<Task>();
         public int UpdateCount { get; set; } = 0;
         public int AwakeCount { get; set; } = 0;
+        public bool LockUpdateThread {get;set;} = false;
 
-        public void Push(Action action)
+        public Task Push(Action action)
         {
-            lock (Queue) Queue.Enqueue(action);
+          var task = new Task(() => action());
+            lock (Queue) Queue.Enqueue(task);
+            return task;
 
         }
 
         public void Update()
         {
-            UpdateCount += 1;
+          UpdateCount += 1;
+          do {
             try
             {
-                lock (Queue)
+              lock (Queue)
+              {
+                while (Queue.Count > 0)
                 {
-                    while (Queue.Count > 0)
-                    {
-                        var x = Queue.Dequeue();
-                        x();
-                    }
+                  var x = Queue.Dequeue();
+                  x.RunSynchronously();
                 }
+              }
             }
             catch (Exception e)
             {
-                Utils.Logger.WriteLine($"Update exception {e.Message} {e.StackTrace}");
+              Utils.Logger.WriteLine($"Update exception {e.Message} {e.StackTrace}");
             }
+          } while(LockUpdateThread);
         }
 
 
@@ -115,11 +128,11 @@ namespace KRPC
         /// </summary>
         public void Awake()
         {
-            Kernel.Instance?.Register(this);
+          Kernel.Instance?.Register(this);
         }
         public void OnDestroy()
         {
-            Kernel.Instance?.Register(null);
+          Kernel.Instance?.Register(null);
         }
 
     }

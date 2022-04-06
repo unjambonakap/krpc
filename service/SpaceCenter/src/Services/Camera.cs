@@ -5,89 +5,127 @@ using KRPC.Service;
 using KRPC.Service.Attributes;
 using KRPC.SpaceCenter.ExtensionMethods;
 using KRPC.Utils;
+using UnityEngine;
 
 namespace KRPC.SpaceCenter.Services
 {
+    [KRPCClass(Service = "SpaceCenter", GameScene = GameScene.Flight)]
+    public class KRPCTransform
+    {
+        public Transform Transform { get; set; }
+        public KRPCTransform(Transform tsf) { Transform = tsf; }
+        [KRPCProperty]
+        public Vector3 Position
+        {
+            get => Transform.position;
+            set => Transform.position = value;
+        }
+
+        [KRPCProperty]
+        public Quaternion Rotation
+        {
+            get => Transform.rotation;
+            set => Transform.rotation = value;
+        }
+    }
     /// <summary>
     /// Controls the game's camera.
     /// Obtained by calling <see cref="SpaceCenter.Camera"/>.
     /// </summary>
-    [KRPCClass (Service = "SpaceCenter", GameScene = GameScene.Flight)]
+    [KRPCClass(Service = "SpaceCenter", GameScene = GameScene.Flight)]
     public class Camera : Equatable<Camera>
     {
         /// <summary>
         /// Create a camera object.
         /// </summary>
-        internal Camera ()
+        internal Camera()
         {
         }
 
         /// <summary>
         /// Returns true if the objects are equal.
         /// </summary>
-        public override bool Equals (Camera other)
+        public override bool Equals(Camera other)
         {
-            return !ReferenceEquals (other, null);
+            return !ReferenceEquals(other, null);
         }
 
         /// <summary>
         /// Hash code for the object.
         /// </summary>
-        public override int GetHashCode ()
+        public override int GetHashCode()
         {
             return 0;
         }
+        [KRPCProperty]
+        public KRPCTransform Transform => new KRPCTransform(FlightCamera.fetch.transform);
 
         /// <summary>
         /// The current mode of the camera.
         /// </summary>
         [KRPCProperty]
-        [SuppressMessage ("Gendarme.Rules.Correctness", "MethodCanBeMadeStaticRule")]
-        [SuppressMessage ("Gendarme.Rules.Smells", "AvoidSwitchStatementsRule")]
-        public CameraMode Mode {
-            get {
+        [SuppressMessage("Gendarme.Rules.Correctness", "MethodCanBeMadeStaticRule")]
+        [SuppressMessage("Gendarme.Rules.Smells", "AvoidSwitchStatementsRule")]
+        public CameraMode Mode
+        {
+            get
+            {
                 if (MapView.MapIsEnabled)
                     return CameraMode.Map;
                 var mode = CameraManager.Instance.currentCameraMode;
                 if (mode == CameraManager.CameraMode.Flight)
-                    return FlightCamera.fetch.mode.ToCameraMode ();
+                    return FlightCamera.fetch.mode.ToCameraMode();
                 if (mode == CameraManager.CameraMode.IVA)
                     return CameraMode.IVA;
-                throw new InvalidOperationException ("Unknown camera mode " + CameraManager.Instance.currentCameraMode);
+                throw new InvalidOperationException("Unknown camera mode " + CameraManager.Instance.currentCameraMode);
             }
-            set {
+            set
+            {
                 if (value == CameraMode.Map && !MapView.MapIsEnabled)
-                    MapView.EnterMapView ();
+                    MapView.EnterMapView();
                 else if (value != CameraMode.Map && MapView.MapIsEnabled)
-                    MapView.ExitMapView ();
-                else {
-                    switch (value) {
-                    case CameraMode.Automatic:
-                        CameraManager.Instance.SetCameraFlight ();
-                        FlightCamera.SetMode (FlightCamera.Modes.AUTO);
-                        break;
-                    case CameraMode.Free:
-                        CameraManager.Instance.SetCameraFlight ();
-                        FlightCamera.SetMode (FlightCamera.Modes.FREE);
-                        break;
-                    case CameraMode.Chase:
-                        CameraManager.Instance.SetCameraFlight ();
-                        FlightCamera.SetMode (FlightCamera.Modes.CHASE);
-                        break;
-                    case CameraMode.Locked:
-                        CameraManager.Instance.SetCameraFlight ();
-                        FlightCamera.SetMode (FlightCamera.Modes.LOCKED);
-                        break;
-                    case CameraMode.Orbital:
-                        CameraManager.Instance.SetCameraFlight ();
-                        FlightCamera.SetMode (FlightCamera.Modes.ORBITAL);
-                        break;
-                    case CameraMode.IVA:
-                        CameraManager.Instance.SetCameraIVA ();
-                        break;
+                    MapView.ExitMapView();
+                else
+                {
+                    switch (value)
+                    {
+                        case CameraMode.Automatic:
+                            CameraManager.Instance.SetCameraFlight();
+                            FlightCamera.SetMode(FlightCamera.Modes.AUTO);
+                            break;
+                        case CameraMode.Free:
+                            CameraManager.Instance.SetCameraFlight();
+                            FlightCamera.SetMode(FlightCamera.Modes.FREE);
+                            break;
+                        case CameraMode.Chase:
+                            CameraManager.Instance.SetCameraFlight();
+                            FlightCamera.SetMode(FlightCamera.Modes.CHASE);
+                            break;
+                        case CameraMode.Locked:
+                            CameraManager.Instance.SetCameraFlight();
+                            FlightCamera.SetMode(FlightCamera.Modes.LOCKED);
+                            break;
+                        case CameraMode.Orbital:
+                            CameraManager.Instance.SetCameraFlight();
+                            FlightCamera.SetMode(FlightCamera.Modes.ORBITAL);
+                            break;
+                        case CameraMode.IVA:
+                            CameraManager.Instance.SetCameraIVA();
+                            break;
                     }
                 }
             }
+        }
+        [KRPCMethod]
+        public void SetTargetPart(KRPC.SpaceCenter.Services.Parts.Part p)
+        {
+            FlightCamera.fetch.SetTargetPart(p.InternalPart);
+        }
+
+        [KRPCMethod]
+        public void SetTargetVessel(Vessel v)
+        {
+            FlightCamera.fetch.SetTargetVessel(v.InternalVessel);
         }
 
         /// <summary>
@@ -95,35 +133,79 @@ namespace KRPC.SpaceCenter.Services
         /// A value between <see cref="MinPitch"/> and <see cref="MaxPitch"/>
         /// </summary>
         [KRPCProperty]
-        [SuppressMessage ("Gendarme.Rules.BadPractice", "DoNotForgetNotImplementedMethodsRule")]
-        [SuppressMessage ("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
-        public float Pitch {
-            get {
-                switch (Mode) {
-                case CameraMode.Map:
-                    return PlanetariumCamera.fetch.getPitch ();
-                case CameraMode.IVA:
-                    throw new NotImplementedException ();
-                default:
-                    return FlightCamera.fetch.getPitch ();
+        [SuppressMessage("Gendarme.Rules.BadPractice", "DoNotForgetNotImplementedMethodsRule")]
+        [SuppressMessage("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
+        public float Pitch
+        {
+            get
+            {
+                switch (Mode)
+                {
+                    case CameraMode.Map:
+                        return PlanetariumCamera.fetch.getPitch();
+                    case CameraMode.IVA:
+                        throw new NotImplementedException();
+                    default:
+                        return FlightCamera.fetch.getPitch();
                 }
             }
-            set {
-                switch (Mode) {
-                case CameraMode.Map:
-                    {
-                        var camera = PlanetariumCamera.fetch;
-                        camera.camPitch = GeometryExtensions.ToRadians (value).Clamp (camera.minPitch, camera.maxPitch);
-                        break;
-                    }
-                case CameraMode.IVA:
-                    throw new NotImplementedException ();
-                default:
-                    {
-                        var camera = FlightCamera.fetch;
-                        camera.camPitch = GeometryExtensions.ToRadians (value).Clamp (camera.minPitch, camera.maxPitch);
-                        break;
-                    }
+            set
+            {
+                switch (Mode)
+                {
+                    case CameraMode.Map:
+                        {
+                            var camera = PlanetariumCamera.fetch;
+                            camera.camPitch = GeometryExtensions.ToRadians(value).Clamp(camera.minPitch, camera.maxPitch);
+                            break;
+                        }
+                    case CameraMode.IVA:
+                        throw new NotImplementedException();
+                    default:
+                        {
+                            var camera = FlightCamera.fetch;
+                            camera.camPitch = GeometryExtensions.ToRadians(value).Clamp(camera.minPitch, camera.maxPitch);
+                            break;
+                        }
+                }
+            }
+        }
+
+        [KRPCProperty]
+        [SuppressMessage("Gendarme.Rules.BadPractice", "DoNotForgetNotImplementedMethodsRule")]
+        [SuppressMessage("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
+        public float Yaw
+        {
+            get
+            {
+                switch (Mode)
+                {
+                    case CameraMode.Map:
+                        return PlanetariumCamera.fetch.getYaw();
+                    case CameraMode.IVA:
+                        throw new NotImplementedException();
+                    default:
+                        return FlightCamera.fetch.getYaw();
+                }
+            }
+            set
+            {
+                switch (Mode)
+                {
+                    case CameraMode.Map:
+                        {
+                            var camera = PlanetariumCamera.fetch;
+                            camera.camHdg = GeometryExtensions.ToRadians(value);
+                            break;
+                        }
+                    case CameraMode.IVA:
+                        throw new NotImplementedException();
+                    default:
+                        {
+                            var camera = FlightCamera.fetch;
+                            camera.camHdg = GeometryExtensions.ToRadians(value);
+                            break;
+                        }
                 }
             }
         }
@@ -132,29 +214,34 @@ namespace KRPC.SpaceCenter.Services
         /// The heading of the camera, in degrees.
         /// </summary>
         [KRPCProperty]
-        [SuppressMessage ("Gendarme.Rules.BadPractice", "DoNotForgetNotImplementedMethodsRule")]
-        [SuppressMessage ("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
-        public float Heading {
-            get {
-                switch (Mode) {
-                case CameraMode.Map:
-                    return PlanetariumCamera.fetch.getYaw ();
-                case CameraMode.IVA:
-                    throw new NotImplementedException ();
-                default:
-                    return FlightCamera.fetch.getYaw ();
+        [SuppressMessage("Gendarme.Rules.BadPractice", "DoNotForgetNotImplementedMethodsRule")]
+        [SuppressMessage("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
+        public float Heading
+        {
+            get
+            {
+                switch (Mode)
+                {
+                    case CameraMode.Map:
+                        return PlanetariumCamera.fetch.getYaw();
+                    case CameraMode.IVA:
+                        throw new NotImplementedException();
+                    default:
+                        return FlightCamera.fetch.getYaw();
                 }
             }
-            set {
-                switch (Mode) {
-                case CameraMode.Map:
-                    PlanetariumCamera.fetch.camHdg = GeometryExtensions.ToRadians (value);
-                    break;
-                case CameraMode.IVA:
-                    throw new NotImplementedException ();
-                default:
-                    FlightCamera.fetch.camHdg = GeometryExtensions.ToRadians (value);
-                    break;
+            set
+            {
+                switch (Mode)
+                {
+                    case CameraMode.Map:
+                        PlanetariumCamera.fetch.camHdg = GeometryExtensions.ToRadians(value);
+                        break;
+                    case CameraMode.IVA:
+                        throw new NotImplementedException();
+                    default:
+                        FlightCamera.fetch.camHdg = GeometryExtensions.ToRadians(value);
+                        break;
                 }
             }
         }
@@ -164,53 +251,58 @@ namespace KRPC.SpaceCenter.Services
         /// A value between <see cref="MinDistance"/> and <see cref="MaxDistance"/>.
         /// </summary>
         [KRPCProperty]
-        [SuppressMessage ("Gendarme.Rules.BadPractice", "DoNotForgetNotImplementedMethodsRule")]
-        [SuppressMessage ("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
-        public float Distance {
-            get {
-                switch (Mode) {
-                case CameraMode.Map:
-                    return PlanetariumCamera.fetch.Distance * ScaledSpace.ScaleFactor;
-                case CameraMode.IVA:
-                    throw new NotImplementedException ();
-                default:
-                    return FlightCamera.fetch.Distance;
+        [SuppressMessage("Gendarme.Rules.BadPractice", "DoNotForgetNotImplementedMethodsRule")]
+        [SuppressMessage("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
+        public float Distance
+        {
+            get
+            {
+                switch (Mode)
+                {
+                    case CameraMode.Map:
+                        return PlanetariumCamera.fetch.Distance * ScaledSpace.ScaleFactor;
+                    case CameraMode.IVA:
+                        throw new NotImplementedException();
+                    default:
+                        return FlightCamera.fetch.Distance;
                 }
             }
-            set {
-                switch (Mode) {
-                case CameraMode.Map:
-                    {
-                        var camera = PlanetariumCamera.fetch;
-                        camera.SetDistance (value.Clamp (camera.minDistance, camera.maxDistance) / ScaledSpace.ScaleFactor);
-                        break;
-                    }
-                case CameraMode.IVA:
-                    throw new NotImplementedException ();
-                default:
-                    {
-                        var camera = FlightCamera.fetch;
-                        camera.SetDistance (value.Clamp (camera.minDistance, camera.maxDistance));
-                        break;
-                    }
+            set
+            {
+                switch (Mode)
+                {
+                    case CameraMode.Map:
+                        {
+                            var camera = PlanetariumCamera.fetch;
+                            camera.SetDistance(value.Clamp(camera.minDistance, camera.maxDistance) / ScaledSpace.ScaleFactor);
+                            break;
+                        }
+                    case CameraMode.IVA:
+                        throw new NotImplementedException();
+                    default:
+                        {
+                            var camera = FlightCamera.fetch;
+                            camera.SetDistance(value.Clamp(camera.minDistance, camera.maxDistance));
+                            break;
+                        }
                 }
             }
         }
 
-        /// <summary>
-        /// The minimum pitch of the camera.
-        /// </summary>
         [KRPCProperty]
-        [SuppressMessage ("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
-        public float MinPitch {
-            get {
-                switch (Mode) {
-                case CameraMode.Map:
-                    return GeometryExtensions.ToDegrees (PlanetariumCamera.fetch.minPitch);
-                case CameraMode.IVA:
-                    return InternalCamera.Instance.minPitch;
-                default:
-                    return GeometryExtensions.ToDegrees (FlightCamera.fetch.minPitch);
+        [SuppressMessage("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
+        public float MinPitch
+        {
+            get
+            {
+                switch (Mode)
+                {
+                    case CameraMode.Map:
+                        return GeometryExtensions.ToDegrees(PlanetariumCamera.fetch.minPitch);
+                    case CameraMode.IVA:
+                        return InternalCamera.Instance.minPitch;
+                    default:
+                        return GeometryExtensions.ToDegrees(FlightCamera.fetch.minPitch);
                 }
             }
         }
@@ -219,16 +311,19 @@ namespace KRPC.SpaceCenter.Services
         /// The maximum pitch of the camera.
         /// </summary>
         [KRPCProperty]
-        [SuppressMessage ("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
-        public float MaxPitch {
-            get {
-                switch (Mode) {
-                case CameraMode.Map:
-                    return GeometryExtensions.ToDegrees (PlanetariumCamera.fetch.maxPitch);
-                case CameraMode.IVA:
-                    return InternalCamera.Instance.maxPitch;
-                default:
-                    return GeometryExtensions.ToDegrees (FlightCamera.fetch.maxPitch);
+        [SuppressMessage("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
+        public float MaxPitch
+        {
+            get
+            {
+                switch (Mode)
+                {
+                    case CameraMode.Map:
+                        return GeometryExtensions.ToDegrees(PlanetariumCamera.fetch.maxPitch);
+                    case CameraMode.IVA:
+                        return InternalCamera.Instance.maxPitch;
+                    default:
+                        return GeometryExtensions.ToDegrees(FlightCamera.fetch.maxPitch);
                 }
             }
         }
@@ -237,16 +332,19 @@ namespace KRPC.SpaceCenter.Services
         /// Minimum distance from the camera to the subject, in meters.
         /// </summary>
         [KRPCProperty]
-        [SuppressMessage ("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
-        public float MinDistance {
-            get {
-                switch (Mode) {
-                case CameraMode.Map:
-                    return PlanetariumCamera.fetch.minDistance * ScaledSpace.ScaleFactor;
-                case CameraMode.IVA:
-                    return InternalCamera.Instance.maxZoom;
-                default:
-                    return FlightCamera.fetch.minDistance;
+        [SuppressMessage("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
+        public float MinDistance
+        {
+            get
+            {
+                switch (Mode)
+                {
+                    case CameraMode.Map:
+                        return PlanetariumCamera.fetch.minDistance * ScaledSpace.ScaleFactor;
+                    case CameraMode.IVA:
+                        return InternalCamera.Instance.maxZoom;
+                    default:
+                        return FlightCamera.fetch.minDistance;
                 }
             }
         }
@@ -255,16 +353,19 @@ namespace KRPC.SpaceCenter.Services
         /// Maximum distance from the camera to the subject, in meters.
         /// </summary>
         [KRPCProperty]
-        [SuppressMessage ("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
-        public float MaxDistance {
-            get {
-                switch (Mode) {
-                case CameraMode.Map:
-                    return PlanetariumCamera.fetch.maxDistance * ScaledSpace.ScaleFactor;
-                case CameraMode.IVA:
-                    return InternalCamera.Instance.minZoom;
-                default:
-                    return FlightCamera.fetch.maxDistance;
+        [SuppressMessage("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
+        public float MaxDistance
+        {
+            get
+            {
+                switch (Mode)
+                {
+                    case CameraMode.Map:
+                        return PlanetariumCamera.fetch.maxDistance * ScaledSpace.ScaleFactor;
+                    case CameraMode.IVA:
+                        return InternalCamera.Instance.minZoom;
+                    default:
+                        return FlightCamera.fetch.maxDistance;
                 }
             }
         }
@@ -273,16 +374,19 @@ namespace KRPC.SpaceCenter.Services
         /// Default distance from the camera to the subject, in meters.
         /// </summary>
         [KRPCProperty]
-        [SuppressMessage ("Gendarme.Rules.BadPractice", "DoNotForgetNotImplementedMethodsRule")]
-        public float DefaultDistance {
-            get {
-                switch (Mode) {
-                case CameraMode.Map:
-                    return PlanetariumCamera.fetch.startDistance * ScaledSpace.ScaleFactor;
-                case CameraMode.IVA:
-                    throw new NotImplementedException ();
-                default:
-                    return FlightCamera.fetch.startDistance;
+        [SuppressMessage("Gendarme.Rules.BadPractice", "DoNotForgetNotImplementedMethodsRule")]
+        public float DefaultDistance
+        {
+            get
+            {
+                switch (Mode)
+                {
+                    case CameraMode.Map:
+                        return PlanetariumCamera.fetch.startDistance * ScaledSpace.ScaleFactor;
+                    case CameraMode.IVA:
+                        throw new NotImplementedException();
+                    default:
+                        return FlightCamera.fetch.startDistance;
                 }
             }
         }
@@ -292,20 +396,23 @@ namespace KRPC.SpaceCenter.Services
         /// Returns <c>null</c> if the camera is not focussed on a celestial body.
         /// Returns an error is the camera is not in map mode.
         /// </summary>
-        [KRPCProperty (Nullable = true)]
-        [SuppressMessage ("Gendarme.Rules.Correctness", "MethodCanBeMadeStaticRule")]
-        [SuppressMessage ("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
-        public CelestialBody FocussedBody {
-            get {
-                CheckCameraFocus ();
+        [KRPCProperty(Nullable = true)]
+        [SuppressMessage("Gendarme.Rules.Correctness", "MethodCanBeMadeStaticRule")]
+        [SuppressMessage("Gendarme.Rules.Smells", "AvoidCodeDuplicatedInSameClassRule")]
+        public CelestialBody FocussedBody
+        {
+            get
+            {
+                CheckCameraFocus();
                 var body = PlanetariumCamera.fetch.target.celestialBody;
-                return body == null ? null : new CelestialBody (body);
+                return body == null ? null : new CelestialBody(body);
             }
-            set {
-                if (ReferenceEquals (value, null))
-                    throw new ArgumentNullException ("FocussedBody");
-                CheckCameraFocus ();
-                PlanetariumCamera.fetch.SetTarget (value.InternalBody);
+            set
+            {
+                if (ReferenceEquals(value, null))
+                    throw new ArgumentNullException("FocussedBody");
+                CheckCameraFocus();
+                PlanetariumCamera.fetch.SetTarget(value.InternalBody);
             }
         }
 
@@ -314,19 +421,22 @@ namespace KRPC.SpaceCenter.Services
         /// Returns <c>null</c> if the camera is not focussed on a vessel.
         /// Returns an error is the camera is not in map mode.
         /// </summary>
-        [KRPCProperty (Nullable = true)]
-        [SuppressMessage ("Gendarme.Rules.Correctness", "MethodCanBeMadeStaticRule")]
-        public Vessel FocussedVessel {
-            get {
-                CheckCameraFocus ();
+        [KRPCProperty(Nullable = true)]
+        [SuppressMessage("Gendarme.Rules.Correctness", "MethodCanBeMadeStaticRule")]
+        public Vessel FocussedVessel
+        {
+            get
+            {
+                CheckCameraFocus();
                 var vessel = PlanetariumCamera.fetch.target.vessel;
-                return vessel == null ? null : new Vessel (vessel);
+                return vessel == null ? null : new Vessel(vessel);
             }
-            set {
-                if (ReferenceEquals (value, null))
-                    throw new ArgumentNullException ("FocussedVessel");
-                CheckCameraFocus ();
-                PlanetariumCamera.fetch.SetTarget (value.InternalVessel.mapObject);
+            set
+            {
+                if (ReferenceEquals(value, null))
+                    throw new ArgumentNullException("FocussedVessel");
+                CheckCameraFocus();
+                PlanetariumCamera.fetch.SetTarget(value.InternalVessel.mapObject);
             }
         }
 
@@ -335,26 +445,29 @@ namespace KRPC.SpaceCenter.Services
         /// Returns <c>null</c> if the camera is not focussed on a maneuver node.
         /// Returns an error is the camera is not in map mode.
         /// </summary>
-        [KRPCProperty (Nullable = true)]
-        [SuppressMessage ("Gendarme.Rules.Correctness", "MethodCanBeMadeStaticRule")]
-        public Node FocussedNode {
-            get {
-                CheckCameraFocus ();
+        [KRPCProperty(Nullable = true)]
+        [SuppressMessage("Gendarme.Rules.Correctness", "MethodCanBeMadeStaticRule")]
+        public Node FocussedNode
+        {
+            get
+            {
+                CheckCameraFocus();
                 var vessel = PlanetariumCamera.fetch.target.vessel;
                 var node = PlanetariumCamera.fetch.target.maneuverNode;
-                return (vessel == null || node == null) ? null : new Node (vessel, node);
+                return (vessel == null || node == null) ? null : new Node(vessel, node);
             }
-            set {
-                CheckCameraFocus ();
-                var mapObject = PlanetariumCamera.fetch.targets.Single (x => x.maneuverNode == value.InternalNode);
-                PlanetariumCamera.fetch.SetTarget (mapObject);
+            set
+            {
+                CheckCameraFocus();
+                var mapObject = PlanetariumCamera.fetch.targets.Single(x => x.maneuverNode == value.InternalNode);
+                PlanetariumCamera.fetch.SetTarget(mapObject);
             }
         }
 
-        static void CheckCameraFocus ()
+        static void CheckCameraFocus()
         {
             if (!MapView.MapIsEnabled)
-                throw new InvalidOperationException ("There is no camera focus when the camera is not in map mode.");
+                throw new InvalidOperationException("There is no camera focus when the camera is not in map mode.");
         }
     }
 }
