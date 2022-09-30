@@ -185,22 +185,22 @@ namespace KRPC.SpaceCenter.Services.Parts
         }
 
         [KRPCProperty]
-        public float CurThrust => CurrentEngine.resultingThrust;
+        public float CurThrust => CurrentEngine.resultingThrust * 1000;
         [KRPCProperty]
-        public float CurFlow => CurrentEngine.requestedMassFlow;
+        public float CurFlow => CurrentEngine.requestedMassFlow *1000;
         [KRPCProperty]
-        public double StepMassFlow => CurrentEngine.MassFlow();
+        public double StepMassFlow => CurrentEngine.MassFlow() * 1000;
         [KRPCProperty]
-        public double MaxFueldFlow => CurrentEngine.maxFuelFlow;
+        public double MaxFueldFlow => CurrentEngine.maxFuelFlow * 1000;
         [KRPCProperty]
-        public double MinFueldFlow => CurrentEngine.minFuelFlow;
+        public double MinFueldFlow => CurrentEngine.minFuelFlow * 1000;
 
 
         [KRPCMethod]
         public List<float> GetMassFlowAndISP (CelestialBody body, float throttle, float altitude, float speed)
         {
             var engine = CurrentEngine;
-            var pressure = body.PressureAt(altitude);
+            var pressure = body.PressureAt(altitude) / SpaceCenter.ATM2PA;
 
             // Compute fuel flow multiplier
             float flowMultiplier = 1;
@@ -223,6 +223,7 @@ namespace KRPC.SpaceCenter.Services.Parts
             if (engine.useAtmCurveIsp) realIsp *= engine.atmCurveIsp.Evaluate((float)(atmDensity *  0.8163265147242933));
             if (engine.useVelCurveIsp)realIsp *= engine.velCurveIsp.Evaluate((float)mach);
 
+            massFlow *= 1000; // kg
             return new List<float>{massFlow, engine.g * engine.multIsp * realIsp*massFlow}.ToList();
         }
         /// <summary>
@@ -240,6 +241,7 @@ namespace KRPC.SpaceCenter.Services.Parts
         public float GetThrust (float throttle, double pressure)
         {
             var engine = CurrentEngine;
+            pressure = pressure / SpaceCenter.ATM2PA;
 
             // Compute fuel flow multiplier
             float flowMultiplier = 1;

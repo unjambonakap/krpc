@@ -68,6 +68,7 @@ namespace KRPC.SpaceCenter.Services
         [KRPCProperty] public static StockAerodynamics Aerodynamics => new StockAerodynamics();
         [KRPCProperty] public static KRPCCheatOptions Cheats => new KRPCCheatOptions();
 
+        [KRPCProperty] public static double ATM2PA => 1/(0.009869232667160128 / 1000);
         /// <summary>
         /// The current amount of science.
         /// </summary>

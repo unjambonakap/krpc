@@ -121,9 +121,9 @@ namespace KRPC.SpaceCenter.ExtensionMethods
         public static Vector3 SimAeroForceByAlt(KRPC.SpaceCenter.Services.CelestialBody body, KRPC.SpaceCenter.Services.Vessel _vessel, Vector3 v_wrld_vel, double altitude)
         {
 
-            var pressure = body.InternalBody.GetPressure(altitude);
+            var pressure = body.PressureAt(altitude);
             var rho = GetDensity(altitude, body.InternalBody);
-            var soundSpeed = body.InternalBody.GetSpeedOfSound(pressure, rho);
+            var soundSpeed = body.SpeedOfSoundAt(altitude);
             return SimAeroForce2(_vessel, v_wrld_vel, pressure, rho, soundSpeed);
 
         }
