@@ -83,8 +83,7 @@ http_archive(
 http_archive(
     name = 'protoc_linux_x86_32',
     build_file_content = "exports_files(['bin/protoc'])",
-    url = 'https://github.com/protocolbuffers/protobuf/releases/download/v3.9.1/protoc-3.9.1-linux-x86_32.zip',
-    sha256 = '1094d7896f93b8987b0e05c110c0635bab7cf63aa24592c5d34cd37b590b5aeb'
+    url = 'https://github.com/protocolbuffers/protobuf/releases/download/v22.3/protoc-22.3-linux-x86_64.zip',
 )
 
 http_archive(
@@ -92,6 +91,12 @@ http_archive(
     build_file_content = "exports_files(['bin/protoc'])",
     url = 'https://github.com/protocolbuffers/protobuf/releases/download/v3.9.1/protoc-3.9.1-linux-x86_64.zip',
     sha256 = '77410d08e9a3c1ebb68afc13ee0c0fb4272c01c20bfd289adfb51b1c622bab07'
+)
+
+http_archive(
+    name = 'protoc_linux_x86_64_new',
+    build_file_content = "exports_files(['bin/protoc'])",
+    url = 'https://github.com/protocolbuffers/protobuf/releases/download/v22.3/protoc-22.3-linux-x86_64.zip',
 )
 
 http_archive(

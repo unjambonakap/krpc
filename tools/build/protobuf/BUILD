@@ -20,6 +20,12 @@ filegroup(
     visibility = ['//visibility:public']
 )
 
+filegroup(
+    name = 'protoc_new',
+    srcs = ['@protoc_linux_x86_64_new//:bin/protoc'],
+    visibility = ['//visibility:public']
+)
+
 config_setting(
     name = 'windows_mingw',
     values = {'compiler': 'windows_mingw'},

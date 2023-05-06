@@ -37,7 +37,7 @@ message Request {
   bool lock_update = 2;
   uint64 req_id = 3;
   uint64 wait_req_id = 4;
-  bool req_phys_loop = 5;
+  uint64 req_phys_loop = 5;
 }
 
 message ProcedureCall {

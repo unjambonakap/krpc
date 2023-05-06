@@ -1,6 +1,7 @@
 import collections
 from enum import Enum
 import krpc.schema.KRPC_pb2 as KRPC
+import numpy as np
 
 
 VALUE_TYPES = {
@@ -219,12 +220,12 @@ class Types(object):
         # Collection types
         try:
             # Coerce tuples to lists
-            if isinstance(value, collections.abc.Iterable) and \
+            if (isinstance(value, np.ndarray) or isinstance(value, collections.abc.Iterable)) and \
                isinstance(typ, ListType):
                 return typ.python_type(
                     self.coerce_to(x, typ.value_type) for x in value)
             # Coerce lists (with appropriate number of elements) to tuples
-            if isinstance(value, collections.abc.Iterable) and \
+            if (isinstance(value, np.ndarray) or isinstance(value, collections.abc.Iterable)) and \
                isinstance(typ, TupleType):
                 if len(value) != len(typ.value_types):
                     raise ValueError
@@ -232,6 +233,7 @@ class Types(object):
                     [self.coerce_to(x, typ.value_types[i])
                      for i, x in enumerate(value)])
         except ValueError:
+            raise
             raise ValueError('Failed to coerce value ' + str(value) +
                              ' of type ' + str(type(value)) +
                              ' to type ' + str(typ))
@@ -239,7 +241,7 @@ class Types(object):
         # See http://docs.python.org/2/reference/datamodel.html#coercion-rules
         numeric_types = (float, int, int)
         if isinstance(value, bool) or \
-           not any(isinstance(value, t) for t in numeric_types) or \
+(not any(isinstance(value, t) for t in numeric_types) and not np.isscalar(value)) or \
            typ.python_type not in numeric_types:
             raise ValueError('Failed to coerce value ' + str(value) +
                              ' of type ' + str(type(value)) +

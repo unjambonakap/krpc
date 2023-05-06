@@ -676,18 +676,22 @@ namespace KRPC.SpaceCenter.Services
             return referenceFrame.VelocityFromWorldSpace (worldCoM, worldVelocity).ToTuple ();
         }
 
-        /// <summary>
-        /// The rotation of the vessel, in the given reference frame.
-        /// </summary>
-        /// <returns>The rotation as a quaternion of the form <math>(x, y, z, w)</math>.</returns>
-        /// <param name="referenceFrame">The reference frame that the returned
-        /// rotation is in.</param>
         [KRPCMethod (GameScene = GameScene.Flight)]
-        public Tuple4 Rotation (ReferenceFrame referenceFrame)
+        public Tuple3 OrbitVelocity (ReferenceFrame referenceFrame)
         {
-            if (ReferenceEquals (referenceFrame, null))
-                throw new ArgumentNullException (nameof (referenceFrame));
-            return referenceFrame.RotationFromWorldSpace (InternalVessel.ReferenceTransform.rotation).ToTuple ();
+            var vessel = InternalVessel;
+            var worldCoM = vessel.CoM;
+            var worldVelocity = vessel.GetOrbit().vel;
+            return referenceFrame.VelocityFromWorldSpace (worldCoM, worldVelocity).ToTuple ();
+        }
+
+         [KRPCMethod (GameScene = GameScene.Flight)]
+        public Tuple3 RBVelocity (ReferenceFrame referenceFrame)
+        {
+            var vessel = InternalVessel;
+            var worldCoM = vessel.CoM;
+            var worldVelocity = InternalVessel.GetComponent<Rigidbody> ().velocity;
+            return referenceFrame.VelocityFromWorldSpace (worldCoM, worldVelocity).ToTuple ();
         }
 
         /// <summary>
@@ -697,15 +701,34 @@ namespace KRPC.SpaceCenter.Services
         /// <param name="referenceFrame">The reference frame that the returned
         /// rotation is in.</param>
         [KRPCMethod (GameScene = GameScene.Flight)]
-        public void SetRotation (Tuple4 rot, ReferenceFrame referenceFrame)
+        public Tuple4 Rotation (ReferenceFrame referenceFrame, bool refOrgRot=false)
         {
+var res =InternalVessel.ReferenceTransform.rotation;
+if (refOrgRot) res = InternalVessel.GetReferenceTransformPart().orgRot;
+if (referenceFrame !=null)
+    res = referenceFrame.RotationFromWorldSpace(res);
 
-            if (ReferenceEquals (referenceFrame, null))
-                throw new ArgumentNullException (nameof (referenceFrame));
-            InternalVessel.SetRotation(referenceFrame.RotationToWorldSpace (rot.ToQuaternionF()));
+return res.ToTuple();
         }
 
         /// <summary>
+        /// The rotation of the vessel, in the given reference frame.
+        /// </summary>
+        /// <returns>The rotation as a quaternion of the form <math>(x, y, z, w)</math>.</returns>
+        /// <param name="referenceFrame">The reference frame that the returned
+        /// rotation is in.</param>
+        [KRPCMethod (GameScene = GameScene.Flight)]
+        public void SetRotation (Tuple4 rot, ReferenceFrame referenceFrame, bool set_reference=false)
+        {
+
+            var wrot = rot.ToQuaternionF();
+            if (referenceFrame != null)
+                wrot = referenceFrame.RotationToWorldSpace (wrot);
+            if (set_reference) InternalVessel.ReferenceTransform.rotation = wrot;
+            else InternalVessel.SetRotation(wrot * QuaternionD.Inverse(InternalVessel.GetReferenceTransformPart().orgRot));
+        }
+
+        /// <summary>ToTuple
         /// The rotation of the vessel, in the given reference frame.
         /// </summary>
         /// <returns>The rotation as a quaternion of the form <math>(x, y, z, w)</math>.</returns>
@@ -717,6 +740,31 @@ namespace KRPC.SpaceCenter.Services
             if (ReferenceEquals (referenceFrame, null))
                 throw new ArgumentNullException (nameof (referenceFrame));
             InternalVessel.SetPosition(referenceFrame.PositionToWorldSpace (pos.ToVector()));
+        }
+
+        [KRPCMethod (GameScene = GameScene.Flight)]
+        public void SetVelocity (Vector3d velocity, ReferenceFrame refFrame)
+        {
+            var wv = refFrame.VelocityToWorldSpace(this.Position(refFrame).ToVector(), velocity);
+            foreach (var x in this.Parts.All)
+                {
+                    var p = x.InternalPart?.GetComponent<Rigidbody> ();
+                    x.InternalPart.vel = wv;
+                    if (p!=null) p.velocity = wv;
+                    if (x.InternalPart.rb!=null) x.InternalPart.rb.velocity = wv;
+                }
+        }
+
+        [KRPCMethod (GameScene = GameScene.Flight)]
+        public void SetAngularVelocity (Vector3d angularVelocity, ReferenceFrame refFrame )
+        {
+            var aw = refFrame.AngularVelocityToWorldSpace(angularVelocity);
+            foreach (var x in this.Parts.All)
+                {
+
+                    var p = x.InternalPart?.GetComponent<Rigidbody> ();
+                    if (p!=null) p.angularVelocity = aw;
+                }
         }
 
         /// <summary>

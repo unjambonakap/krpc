@@ -164,7 +164,7 @@ class Client(object):
             return func._return_type
 
 
-    def nop(self, req_phys_loop=False):
+    def nop(self, req_phys_loop=0):
         request = KRPC.Request()
         request.lock_update = self.lock_update
         request.wait_req_id = self.wait_req_id
@@ -227,6 +227,7 @@ class Client(object):
                 try:
                     value = self._types.coerce_to(value, typ)
                 except ValueError:
+                    raise
                     raise TypeError(
                         '%s.%s() argument %d must be a %s, got a %s' %
                         (service, procedure, i, typ.python_type, type(value)))

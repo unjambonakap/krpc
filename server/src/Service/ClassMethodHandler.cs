@@ -22,6 +22,9 @@ namespace KRPC.Service
             else if (localType == typeof(Quaternion))
                 Configure<Quaternion, global::KRPC.Utils.Tuple<float,float, float, float>>(x=>new Utils.Tuple<float, float, float, float>(x.x, x.y, x.z, x.w),
                  x=>new Quaternion(x.Item1, x.Item2, x.Item3, x.Item4));
+            else if (localType == typeof(QuaternionD))
+                Configure<QuaternionD, global::KRPC.Utils.Tuple<double,double, double, double>>(x=>new Utils.Tuple<double, double, double, double>(x.x, x.y, x.z, x.w),
+                 x=>new QuaternionD(x.Item1, x.Item2, x.Item3, x.Item4));
             else
                 LocalType = RemoteType = localType;
 

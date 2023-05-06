@@ -47,7 +47,8 @@ namespace KRPC.SpaceCenter.Services.Parts
         /// </summary>
         public override bool Equals (Thruster other)
         {
-            return !ReferenceEquals (other, null) && part == other.part && transformIndex == other.transformIndex;
+            return !ReferenceEquals (other, null) && part == other.part && transformIndex == other.transformIndex 
+            && (gimbal == other.gimbal  || (gimbal?.Equals(other.gimbal) ?? false)) && (engine == other.engine || (engine.Equals(other.engine)));
         }
 
         /// <summary>
@@ -203,8 +204,18 @@ namespace KRPC.SpaceCenter.Services.Parts
         /// <summary>
         /// Transform of the thrust vector in world space.
         /// </summary>
-        internal Transform WorldTransform {
+        public Transform WorldTransform {
             get { return (engine != null ? engine.thrustTransforms : rcs.thrusterTransforms) [transformIndex]; }
+        }
+
+        [KRPCProperty]
+        public Quaternion LocalQuat {
+            get => WorldTransform.localRotation;
+        }
+
+        [KRPCProperty]
+        public Quaternion WorldTransformQuat {
+            get => WorldTransform.rotation;
         }
 
         /// <summary>

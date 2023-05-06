@@ -449,6 +449,7 @@ public class ReferenceFrame : Equatable<ReferenceFrame>
     /// Applying the rotation to a vector in reference-frame-space produces the corresponding
     /// vector in world-space.
     /// </summary>
+    [KRPCProperty]
     public QuaternionD Rotation {
         get {
             // Note: up is along the y-axis, forward is along the z-axis
@@ -723,6 +724,7 @@ public class ReferenceFrame : Equatable<ReferenceFrame>
     /// <summary>
     /// Convert the given rotation in world space, to a rotation in this reference frame.
     /// </summary>
+    [KRPCMethod]
     public QuaternionD RotationFromWorldSpace (QuaternionD worldRotation)
     {
         return Rotation.Inverse () * worldRotation;
@@ -731,6 +733,7 @@ public class ReferenceFrame : Equatable<ReferenceFrame>
     /// <summary>
     /// Convert the given rotation in this reference frame, to a rotation in world space.
     /// </summary>
+    [KRPCMethod]
     public QuaternionD RotationToWorldSpace (QuaternionD rotation)
     {
         return Rotation * rotation;

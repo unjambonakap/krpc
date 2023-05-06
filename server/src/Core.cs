@@ -36,7 +36,7 @@ namespace KRPC
         public bool LockUpdate {get;set;} = false;
         public ulong WaitReqId {get;set;} = 0;
         public ulong CurReqId {get;set;} = 0;
-        public bool ReqPhysLoop { get; private set; }
+        public ulong ReqPhysLoop { get; private set; }
 
         /// <summary>
         /// Get the core instance
@@ -366,9 +366,9 @@ namespace KRPC
               Kernel.Instance.UpdateInternal();
               islocked = LockUpdate;
               hasLocked |= islocked;
-              if (ReqPhysLoop) break;
+              if (ReqPhysLoop>0) break;
             }while(islocked || CurReqId != WaitReqId);
-            ReqPhysLoop = false;
+            if (ReqPhysLoop > 0) --ReqPhysLoop;
 
             var timeElapsed = updateTimer.ElapsedSeconds ();
             var ticksElapsed = updateTimer.ElapsedTicks;
@@ -443,7 +443,7 @@ namespace KRPC
             rpcPollTimeout.Start ();
             while (true) {
               PollRequests (rpcYieldedContinuations);
-              if (ReqPhysLoop) break;
+              if (ReqPhysLoop>0) break;
               if (!config.BlockingRecv)
                 break;
               if (rpcPollTimeout.ElapsedTicks > recvTimeoutTicks)
@@ -455,7 +455,7 @@ namespace KRPC
             }
             rpcPollTimer.Stop ();
 
-            if (ReqPhysLoop) {
+            if (ReqPhysLoop>0) {
               rpcYieldedContinuations.AddRange(rpcContinuations);
               rpcContinuations.Clear();
 
@@ -730,9 +730,9 @@ namespace KRPC
                   var calls = string.Join(", ", requestContinuation.Calls.Select(call => call.Procedure.FullyQualifiedName).ToArray());
                   Logger.WriteLine ("Decoded request from client " + client.Address + " (" + calls + ")", Logger.Severity.Debug);
                 }
-                ReqPhysLoop |= request.ReqPhysLoop;
-                request.ReqPhysLoop = false;
-                if (ReqPhysLoop) break;
+                ReqPhysLoop += request.ReqPhysLoop;
+                request.ReqPhysLoop = 0;
+                if (ReqPhysLoop>0) break;
               }
             } catch (ClientDisconnectedException) {
               Logger.WriteLine ("Client " + client.Address + " disconnected");

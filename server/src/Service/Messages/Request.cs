@@ -9,7 +9,7 @@ namespace KRPC.Service.Messages
         public bool LockUpdate {get;set;}
         public ulong WaitReqId {get;set;}
         public ulong ReqId {get;set;}
-        public bool ReqPhysLoop { get; internal set; }
+        public ulong ReqPhysLoop { get; internal set; }
 
         public Request ()
         {

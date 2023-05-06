@@ -414,7 +414,7 @@ namespace KRPC.SpaceCenter.Services
         [KRPCProcedure]
         public static void LaunchVessel2 (string craftDirectory, string name, string launchSite, bool recover = true)
         {
-            var config = new LaunchConfig(craftDirectory, name, launchSite, recover, pathMode: true);
+            var config = new LaunchConfig(craftDirectory, name, launchSite, recover, crew: null, flagUrl: null, pathMode: true);
             config.RunPreFlightChecks();
             throw new YieldException (new ParameterizedContinuationVoid<LaunchConfig> (WaitForVesselPreFlightChecks, config));
         }
@@ -630,7 +630,6 @@ namespace KRPC.SpaceCenter.Services
         public static double G {
             get { return 6.67408e-11; }
         }
-
         // TODO: warp functionality should be available in other game scenes? not just flight?
 
         /// <summary>
@@ -696,6 +695,12 @@ namespace KRPC.SpaceCenter.Services
         public static int PhysicsWarpFactor {
             get { return WarpMode == WarpMode.Physics ? TimeWarp.CurrentRateIndex : 0; }
             set { SetWarpFactor (TimeWarp.Modes.LOW, value.Clamp (0, 3)); }
+        }
+
+        [KRPCProcedure (GameScene = GameScene.Flight)]
+        public static Vector3 GetGravity(Vector3 position, ReferenceFrame refFrame)
+        {
+            return refFrame.DirectionFromWorldSpace(FlightGlobals.getGeeForceAtPosition(refFrame.PositionToWorldSpace(position)));
         }
 
         /// <summary>

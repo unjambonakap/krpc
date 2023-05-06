@@ -35,6 +35,9 @@ namespace KRPC.SpaceCenter.Services.Parts
             partFlightId = part.flightID;
         }
 
+        [KRPCProperty]
+        public uint PartId => partFlightId;
+
         /// <summary>
         /// Returns true if the objects are equal.
         /// </summary>
@@ -814,6 +817,12 @@ namespace KRPC.SpaceCenter.Services.Parts
             if (ReferenceEquals (referenceFrame, null))
                 throw new ArgumentNullException (nameof (referenceFrame));
             return referenceFrame.RotationFromWorldSpace (InternalPart.transform.rotation).ToTuple ();
+        }
+
+        [KRPCMethod]
+        public Quaternion WorldRotation ()
+        {
+            return InternalPart.transform.rotation;
         }
 
         /// <summary>

@@ -25,7 +25,7 @@ protobuf_py = rule(
     attrs = {
         'src': attr.label(allow_single_file=['.proto']),
         '_protoc': attr.label(
-            default=Label('//tools/build/protobuf:protoc'),
+            default=Label('//tools/build/protobuf:protoc_new'),
             allow_single_file=True),
         'out': attr.output(mandatory=True)
     },

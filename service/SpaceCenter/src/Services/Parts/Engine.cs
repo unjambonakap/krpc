@@ -28,7 +28,11 @@ namespace KRPC.SpaceCenter.Services.Parts
         {
             this.gimbal = gimbal;
         }
+        [KRPCProperty]
         public bool Valid => gimbal !=null;
+
+        [KRPCProperty]
+        public bool FlipYZ => gimbal.flipYZ;
 
         [KRPCProperty]
         public bool EnableGimbal {
@@ -51,13 +55,33 @@ namespace KRPC.SpaceCenter.Services.Parts
                 gimbal.useGimbalResponseSpeed = value;
             }
         }
+
         [KRPCMethod]
-        public void SetGimbalRot(Quaternion rot)
+        public int TransformCount()
+        {
+            return gimbal.gimbalTransforms.Count;
+        }
+
+        [KRPCMethod]
+        public Quaternion Rotation(int index)
+        {
+            return gimbal.gimbalTransforms[index].rotation;
+        }
+
+        [KRPCMethod]
+        public Quaternion LocalRotation(int index)
+        {
+            return gimbal.gimbalTransforms[index].localRotation;
+        }
+
+        [KRPCMethod]
+        public void SetGimbalRot(Quaternion rot, bool raw=false)
         {
             for (int i=0; i< gimbal.gimbalTransforms.Count; ++i){
-                gimbal.gimbalTransforms[i].localRotation = gimbal.initRots[i] * rot;
+                gimbal.gimbalTransforms[i].localRotation = raw ? rot : gimbal.initRots[i] * rot;
             }
         }
+
         [KRPCMethod]
         public Quaternion Actuation2Rot(Vector2 actuation)
         {
